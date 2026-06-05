@@ -107,9 +107,13 @@ export default function App() {
             `Observaciones: ${orden.observaciones}`,
           ],
           [
-            `IMEI / Serie: ${orden.imei}`,
-            `Estado: ${orden.estado}`,
-          ],
+  `IMEI / Serie: ${orden.imei}`,
+  `Contraseña: ${orden.password}`,
+],
+[
+  `Estado: ${orden.estado}`,
+  "",
+],
         ],
 
         styles: {
