@@ -92,23 +92,22 @@ export default function App() {
         styles: { fontSize: 10, cellPadding: 4 },
       });
 
-      doc.roundedRect(20, y + 88, 170, 24, 3, 3);
+      doc.roundedRect(20, y + 105, 170, 24, 3, 3);
       doc.setFontSize(7);
-      doc.text(
-        "1) Para retirar el equipo es OBLIGATORIA la presentacion de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 dias podran ser descartados. 3) El cliente autoriza diagnostico y reparacion. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.",
-        24, y + 95, { maxWidth: 160 }
+      doc.text("1) Para retirar el equipo es OBLIGATORIA la presentacion de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 dias podran ser descartados. 3) El cliente autoriza diagnostico y reparacion. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.",
+        24, y + 112, { maxWidth: 160 }
       );
 
-      doc.line(30, y + 126, 80, y + 126);
-      doc.line(130, y + 126, 180, y + 126);
+      doc.line(30, y + 143, 80, y + 143);
+      doc.line(130, y + 143, 180, y + 143);
       doc.setFontSize(8);
-      doc.text("Firma Cliente", 44, y + 132);
-      doc.text("Firma Tecnico", 144, y + 132);
+      doc.text("Firma Cliente", 44, y + 149);
+      doc.text("Firma Tecnico", 144, y + 149);
       doc.setFillColor(15, 15, 15);
-      doc.rect(0, y + 138, 210, 10, "F");
+      doc.rect(0, y + 155, 210, 10, "F");
       doc.setTextColor(255, 165, 0);
       doc.setFontSize(10);
-      doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", 105, y + 145, { align: "center" });
+      doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", 105, y + 162, { align: "center" });
     }
 
     crearCopia(0);
