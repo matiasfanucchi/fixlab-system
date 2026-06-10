@@ -125,7 +125,11 @@ export default function App() {
   useEffect(() => {
     cargarOrdenes();
   }, []);
-
+async function eliminarOrden(id) {
+  if (!window.confirm("¿Seguro que querés eliminar esta orden?")) return;
+  await supabase.from("ordenes").delete().eq("id", id);
+  cargarOrdenes();
+}
   return (
     <div className="app">
       <aside className="sidebar">
@@ -185,7 +189,18 @@ export default function App() {
                     <option key={estado}>{estado}</option>
                   ))}
                 </select>
-                <button className="printbtn" onClick={() => imprimirOrden(o)}>PDF</button>
+                <button
+  className="printbtn"
+  onClick={() => imprimirOrden(o)}
+>
+  PDF
+</button>
+<button
+  className="deletebtn"
+  onClick={() => eliminarOrden(o.id)}
+>
+  Eliminar
+</button>
               </div>
             </div>
           ))}
@@ -213,6 +228,7 @@ export default function App() {
         .orders { background: #1d1d1d; padding: 25px; border-radius: 15px; }
         .printbtn { margin-top: 10px; background: white; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .ordercard { background: #222; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .deletebtn { margin-top: 10px; background: #e53e3e; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
       `}</style>
     </div>
   );
