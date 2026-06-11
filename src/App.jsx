@@ -268,10 +268,10 @@ export default function App() {
                 <input placeholder="Observaciones" value={form.observaciones} onChange={e => setForm({...form, observaciones: e.target.value})} />
               </div>
               <button className="savebtn" onClick={async () => {
-  const { data } = await supabase.from("ordenes").insert([{ ...form, estado: "Ingresado" }]).select().single();
-  if (data && form.telefono) {
-    const msg = encodeURIComponent(`Hola ${form.cliente}! Recibimos tu equipo *${form.equipo}* en Fix Lab. Tu número de orden es *#${data.id}*. Te avisamos cuando esté listo! - Fix Lab`);
-   window.open(`https://api.whatsapp.com/send?phone=549${orden.telefono}&text=${msg}`, "_blank");
+  const { data } = await supabase.from("ordenes").insert([{ ...form, estado: "Ingresado" }]).select();
+  if (data && data[0] && form.telefono) {
+    const msg = encodeURIComponent(`Hola ${form.cliente}! Recibimos tu equipo *${form.equipo}* en Fix Lab. Tu número de orden es *#${data[0].id}*. Te avisamos cuando esté listo! - Fix Lab`);
+    window.open(`https://api.whatsapp.com/send?phone=549${form.telefono}&text=${msg}`, "_blank");
   }
   setForm({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
   cargarOrdenes();
