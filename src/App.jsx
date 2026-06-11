@@ -9,64 +9,86 @@ const supabase = createClient(
   "sb_publishable_ALou-nprG8wRyhw9fri4_g_rITe6-bx"
 );
 
-const estados = [
-  "Ingresado",
-  "Diagnóstico",
-  "En reparación",
-  "Esperando repuesto",
-  "Listo",
-  "Entregado",
-];
+const estados = ["Ingresado","Diagnóstico","En reparación","Esperando repuesto","Listo","Entregado"];
 
 export default function App() {
+  const [seccion, setSeccion] = useState("servicio");
   const [ordenes, setOrdenes] = useState([]);
-
-  const [form, setForm] = useState({
-    cliente: "",
-    telefono: "",
-    equipo: "",
-    imei: "",
-    falla: "",
-    password: "",
-    accesorios: "",
-    observaciones: "",
-    importe: "",
-  });
+  const [movimientos, setMovimientos] = useState([]);
+  const [vistaСaja, setVistaCaja] = useState("dia");
+  const [form, setForm] = useState({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
+  const [formCaja, setFormCaja] = useState({ tipo:"ingreso", categoria:"Venta accesorio", descripcion:"", monto:"" });
 
   async function cargarOrdenes() {
-    const { data } = await supabase
-      .from("ordenes")
-      .select("*")
-      .order("id", { ascending: false });
+    const { data } = await supabase.from("ordenes").select("*").order("id", { ascending: false });
     setOrdenes(data || []);
   }
 
+  async function cargarCaja() {
+    const { data } = await supabase.from("caja").select("*").order("fecha", { ascending: false });
+    setMovimientos(data || []);
+  }
+
   async function guardarOrden() {
-    const { data, error } = await supabase
-      .from("ordenes")
-      .insert([{ ...form, estado: "Ingresado" }]);
-
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
-
-    setForm({
-      cliente: "",
-      telefono: "",
-      equipo: "",
-      imei: "",
-      falla: "",
-      password: "",
-      accesorios: "",
-      observaciones: "",
-      importe: "",
-    });
-
+    await supabase.from("ordenes").insert([{ ...form, estado: "Ingresado" }]);
+    setForm({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
     cargarOrdenes();
+  }
+
+  async function eliminarOrden(id) {
+    if (!window.confirm("¿Seguro que querés eliminar esta orden?")) return;
+    await supabase.from("ordenes").delete().eq("id", id);
+    cargarOrdenes();
+  }
+
+  async function cambiarEstado(id, estado, orden) {
+    await supabase.from("ordenes").update({ estado }).eq("id", id);
+    if (estado === "Entregado" && orden.importe) {
+      await supabase.from("caja").insert([{
+        tipo: "ingreso",
+        categoria: "Servicio técnico",
+        descripcion: `Orden #${id} - ${orden.cliente} - ${orden.equipo}`,
+        monto: parseFloat(orden.importe) || 0,
+        orden_id: id,
+      }]);
+    }
+    cargarOrdenes();
+    cargarCaja();
+  }
+
+  async function guardarMovimiento() {
+    if (!formCaja.monto || !formCaja.descripcion) return;
+    await supabase.from("caja").insert([{ ...formCaja, monto: parseFloat(formCaja.monto) }]);
+    setFormCaja({ tipo:"ingreso", categoria:"Venta accesorio", descripcion:"", monto:"" });
+    cargarCaja();
+  }
+
+  async function eliminarMovimiento(id) {
+    if (!window.confirm("¿Eliminar este movimiento?")) return;
+    await supabase.from("caja").delete().eq("id", id);
+    cargarCaja();
+  }
+
+  function filtrarMovimientos() {
+    const ahora = new Date();
+    return movimientos.filter(m => {
+      const fecha = new Date(m.fecha);
+      if (vistaСaja === "dia") return fecha.toDateString() === ahora.toDateString();
+      if (vistaСaja === "semana") { const diff = (ahora - fecha) / (1000*60*60*24); return diff <= 7; }
+      if (vistaСaja === "mes") return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
+      return true;
+    });
+  }
+
+  function calcularTotales() {
+    const filtrados = filtrarMovimientos();
+    const ingresos = filtrados.filter(m => m.tipo === "ingreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
+    const egresos = filtrados.filter(m => m.tipo === "egreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
+    return { ingresos, egresos, balance: ingresos - egresos };
   }
 
   function imprimirOrden(orden) {
     const doc = new jsPDF();
-
     function crearCopia(y) {
       doc.setLineDash([], 0);
       doc.setFillColor(15, 15, 15);
@@ -78,7 +100,6 @@ export default function App() {
       doc.setFontSize(9);
       doc.text(`Fecha: ${new Date().toLocaleString()}`, 135, y + 32);
       doc.line(20, y + 36, 190, y + 36);
-
       autoTable(doc, {
         startY: y + 42,
         theme: "plain",
@@ -91,13 +112,9 @@ export default function App() {
         ],
         styles: { fontSize: 10, cellPadding: 4 },
       });
-
       doc.roundedRect(20, y + 105, 170, 24, 3, 3);
       doc.setFontSize(7);
-      doc.text("1) Para retirar el equipo es OBLIGATORIA la presentacion de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 dias podran ser descartados. 3) El cliente autoriza diagnostico y reparacion. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.",
-        24, y + 112, { maxWidth: 160 }
-      );
-
+      doc.text("1) Para retirar el equipo es OBLIGATORIA la presentacion de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 dias podran ser descartados. 3) El cliente autoriza diagnostico y reparacion. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.", 24, y + 112, { maxWidth: 160 });
       doc.line(30, y + 143, 80, y + 143);
       doc.line(130, y + 143, 180, y + 143);
       doc.setFontSize(8);
@@ -109,7 +126,6 @@ export default function App() {
       doc.setFontSize(10);
       doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", 105, y + 162, { align: "center" });
     }
-
     crearCopia(0);
     doc.setDrawColor(120);
     doc.line(10, 148, 200, 148);
@@ -117,104 +133,150 @@ export default function App() {
     doc.save(`orden-${orden.id}.pdf`);
   }
 
-  async function cambiarEstado(id, estado) {
-    await supabase.from("ordenes").update({ estado }).eq("id", id);
-    cargarOrdenes();
-  }
+  useEffect(() => { cargarOrdenes(); cargarCaja(); }, []);
 
-  useEffect(() => {
-    cargarOrdenes();
-  }, []);
-async function eliminarOrden(id) {
-  if (!window.confirm("¿Seguro que querés eliminar esta orden?")) return;
-  await supabase.from("ordenes").delete().eq("id", id);
-  cargarOrdenes();
-}
+  const { ingresos, egresos, balance } = calcularTotales();
+
   return (
     <div className="app">
       <aside className="sidebar">
         <nav>
-          <button>Dashboard</button>
-          <button>Servicio Técnico</button>
-          <button>Stock</button>
-          <button>Caja</button>
+          <button onClick={() => setSeccion("servicio")} className={seccion === "servicio" ? "active" : ""}>Servicio Técnico</button>
+          <button onClick={() => setSeccion("caja")} className={seccion === "caja" ? "active" : ""}>Caja</button>
+          <button onClick={() => setSeccion("stock")} className={seccion === "stock" ? "active" : ""}>Stock</button>
         </nav>
       </aside>
 
       <main className="content">
-        <div className="topcards">
-          <div className="card orange">
-            <h2>{ordenes.length}</h2>
-            <p>Órdenes</p>
-          </div>
-          <div className="card">
-            <h2>0</h2>
-            <p>Stock Bajo</p>
-          </div>
-          <div className="card">
-            <h2>$0</h2>
-            <p>Caja Diaria</p>
-          </div>
-        </div>
 
-        <div className="formcard">
-          <h2>Nueva Orden Técnica</h2>
-          <div className="grid">
-            <input placeholder="Cliente" value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} />
-            <input placeholder="Teléfono" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
-            <input placeholder="Equipo" value={form.equipo} onChange={(e) => setForm({ ...form, equipo: e.target.value })} />
-            <input placeholder="IMEI / Serie" value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
-            <input placeholder="Falla" value={form.falla} onChange={(e) => setForm({ ...form, falla: e.target.value })} />
-            <input placeholder="Contraseña" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-            <input placeholder="Accesorios" value={form.accesorios} onChange={(e) => setForm({ ...form, accesorios: e.target.value })} />
-            <input placeholder="Importe" value={form.importe} onChange={(e) => setForm({ ...form, importe: e.target.value })} />
-            <input placeholder="Observaciones" value={form.observaciones} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} />
-          </div>
-          <button className="savebtn" onClick={guardarOrden}>Guardar Orden</button>
-        </div>
-
-        <div className="orders">
-          <h2>Órdenes Técnicas</h2>
-          {ordenes.map((o) => (
-            <div className="ordercard" key={o.id}>
-              <div>
-                <h3>{o.cliente}</h3>
-                <p>{o.telefono}</p>
-                <p>{o.equipo}</p>
-                <p>{o.falla}</p>
+        {seccion === "servicio" && (
+          <>
+            <div className="topcards">
+              <div className="card orange"><h2>{ordenes.length}</h2><p>Órdenes</p></div>
+              <div className="card"><h2>{ordenes.filter(o => o.estado !== "Entregado").length}</h2><p>En curso</p></div>
+              <div className="card"><h2>{ordenes.filter(o => o.estado === "Listo").length}</h2><p>Listos</p></div>
+            </div>
+            <div className="formcard">
+              <h2>Nueva Orden Técnica</h2>
+              <div className="grid">
+                <input placeholder="Cliente" value={form.cliente} onChange={e => setForm({...form, cliente: e.target.value})} />
+                <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
+                <input placeholder="Equipo" value={form.equipo} onChange={e => setForm({...form, equipo: e.target.value})} />
+                <input placeholder="IMEI / Serie" value={form.imei} onChange={e => setForm({...form, imei: e.target.value})} />
+                <input placeholder="Falla" value={form.falla} onChange={e => setForm({...form, falla: e.target.value})} />
+                <input placeholder="Contraseña" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+                <input placeholder="Accesorios" value={form.accesorios} onChange={e => setForm({...form, accesorios: e.target.value})} />
+                <input placeholder="Importe" value={form.importe} onChange={e => setForm({...form, importe: e.target.value})} />
+                <input placeholder="Observaciones" value={form.observaciones} onChange={e => setForm({...form, observaciones: e.target.value})} />
               </div>
-              <div className="statusbox">
-                <select value={o.estado} onChange={(e) => cambiarEstado(o.id, e.target.value)}>
-                  {estados.map((estado) => (
-                    <option key={estado}>{estado}</option>
-                  ))}
-                </select>
-                <button
-  className="printbtn"
-  onClick={() => imprimirOrden(o)}
->
-  PDF
-</button>
-<button
-  className="deletebtn"
-  onClick={() => eliminarOrden(o.id)}
->
-  Eliminar
-</button>
+              <button className="savebtn" onClick={guardarOrden}>Guardar Orden</button>
+            </div>
+            <div className="orders">
+              <h2>Órdenes Técnicas</h2>
+              {ordenes.map(o => (
+                <div className="ordercard" key={o.id}>
+                  <div>
+                    <h3>{o.cliente}</h3>
+                    <p>{o.telefono}</p>
+                    <p>{o.equipo}</p>
+                    <p>{o.falla}</p>
+                  </div>
+                  <div className="statusbox">
+                    <select value={o.estado} onChange={e => cambiarEstado(o.id, e.target.value, o)}>
+                      {estados.map(estado => <option key={estado}>{estado}</option>)}
+                    </select>
+                    <button className="printbtn" onClick={() => imprimirOrden(o)}>PDF</button>
+                    <button className="deletebtn" onClick={() => eliminarOrden(o.id)}>Eliminar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {seccion === "caja" && (
+          <>
+            <div className="topcards">
+              <div className="card" style={{borderColor:"#48bb78", border:"2px solid #48bb78"}}>
+                <h2 style={{color:"#48bb78"}}>${ingresos.toFixed(2)}</h2>
+                <p>Ingresos</p>
+              </div>
+              <div className="card" style={{border:"2px solid #e53e3e"}}>
+                <h2 style={{color:"#e53e3e"}}>${egresos.toFixed(2)}</h2>
+                <p>Egresos</p>
+              </div>
+              <div className="card orange">
+                <h2>${balance.toFixed(2)}</h2>
+                <p>Balance</p>
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className="formcard">
+              <h2>Nuevo Movimiento</h2>
+              <div className="grid">
+                <select value={formCaja.tipo} onChange={e => setFormCaja({...formCaja, tipo: e.target.value})}>
+                  <option value="ingreso">Ingreso</option>
+                  <option value="egreso">Egreso</option>
+                </select>
+                <select value={formCaja.categoria} onChange={e => setFormCaja({...formCaja, categoria: e.target.value})}>
+                  <option>Venta accesorio</option>
+                  <option>Servicio técnico</option>
+                  <option>Compra repuesto</option>
+                  <option>Gasto local</option>
+                  <option>Otro</option>
+                </select>
+                <input placeholder="Descripción" value={formCaja.descripcion} onChange={e => setFormCaja({...formCaja, descripcion: e.target.value})} />
+                <input placeholder="Monto" type="number" value={formCaja.monto} onChange={e => setFormCaja({...formCaja, monto: e.target.value})} />
+              </div>
+              <button className="savebtn" onClick={guardarMovimiento}>Guardar Movimiento</button>
+            </div>
+
+            <div className="orders">
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px"}}>
+                <h2 style={{margin:0}}>Movimientos</h2>
+                <div style={{display:"flex", gap:"10px"}}>
+                  {["dia","semana","mes"].map(v => (
+                    <button key={v} onClick={() => setVistaCaja(v)}
+                      style={{padding:"8px 16px", borderRadius:"8px", border:"none", cursor:"pointer", fontWeight:"bold",
+                        background: vistaСaja === v ? "orange" : "#333", color: vistaСaja === v ? "black" : "white"}}>
+                      {v === "dia" ? "Hoy" : v === "semana" ? "Semana" : "Mes"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filtrarMovimientos().map(m => (
+                <div className="ordercard" key={m.id}>
+                  <div>
+                    <h3 style={{color: m.tipo === "ingreso" ? "#48bb78" : "#e53e3e"}}>
+                      {m.tipo === "ingreso" ? "+" : "-"}${parseFloat(m.monto).toFixed(2)}
+                    </h3>
+                    <p>{m.categoria}</p>
+                    <p>{m.descripcion}</p>
+                    <p style={{fontSize:"12px", color:"#888"}}>{new Date(m.fecha).toLocaleString()}</p>
+                  </div>
+                  <button className="deletebtn" onClick={() => eliminarMovimiento(m.id)}>Eliminar</button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {seccion === "stock" && (
+          <div className="formcard">
+            <h2>Stock — Próximamente</h2>
+          </div>
+        )}
+
       </main>
 
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial; background: #111; }
         .app { display: flex; min-height: 100vh; background: #111; color: white; }
-        .sidebar { width: 250px; background: #181818; padding: 30px 20px; border-right: 1px solid #2a2a2a; }
+        .sidebar { width: 220px; background: #181818; padding: 30px 20px; border-right: 1px solid #2a2a2a; }
         .sidebar nav { display: flex; flex-direction: column; gap: 10px; }
-        .sidebar button { background: #222; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; text-align: left; }
-        .sidebar button:hover { background: orange; color: black; }
+        .sidebar button { background: #222; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 14px; }
+        .sidebar button:hover, .sidebar button.active { background: orange; color: black; }
         .content { flex: 1; padding: 30px; }
         .topcards { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 30px; }
         .card { background: #1d1d1d; padding: 25px; border-radius: 15px; }
@@ -227,8 +289,9 @@ async function eliminarOrden(id) {
         .savebtn { margin-top: 20px; background: orange; color: black; border: none; padding: 15px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .orders { background: #1d1d1d; padding: 25px; border-radius: 15px; }
         .printbtn { margin-top: 10px; background: white; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .ordercard { background: #222; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
         .deletebtn { margin-top: 10px; background: #e53e3e; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .ordercard { background: #222; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .statusbox { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
       `}</style>
     </div>
   );
