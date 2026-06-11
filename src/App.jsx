@@ -10,6 +10,7 @@ const supabase = createClient(
 );
 
 const estados = ["Ingresado","Diagnóstico","En reparación","Esperando repuesto","Listo","Entregado"];
+const categoriasProducto = ["Accesorios celular","Informática","Otro"];
 
 export default function App() {
   const [sesion, setSesion] = useState(null);
@@ -18,9 +19,12 @@ export default function App() {
   const [seccion, setSeccion] = useState("servicio");
   const [ordenes, setOrdenes] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [vistaCaja, setVistaCaja] = useState("dia");
   const [form, setForm] = useState({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
   const [formCaja, setFormCaja] = useState({ tipo:"ingreso", categoria:"Venta accesorio", descripcion:"", monto:"" });
+  const [formProducto, setFormProducto] = useState({ nombre:"", categoria:"Accesorios celular", compatible_con:"", cantidad:"", precio_costo:"", precio_venta:"", stock_minimo:"3" });
+  const [editandoProducto, setEditandoProducto] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSesion(session));
@@ -28,7 +32,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (sesion) { cargarOrdenes(); cargarCaja(); }
+    if (sesion) { cargarOrdenes(); cargarCaja(); cargarProductos(); }
   }, [sesion]);
 
   async function login() {
@@ -37,9 +41,7 @@ export default function App() {
     if (error) setLoginError("Email o contraseña incorrectos");
   }
 
-  async function logout() {
-    await supabase.auth.signOut();
-  }
+  async function logout() { await supabase.auth.signOut(); }
 
   async function cargarOrdenes() {
     const { data } = await supabase.from("ordenes").select("*").order("id", { ascending: false });
@@ -49,6 +51,11 @@ export default function App() {
   async function cargarCaja() {
     const { data } = await supabase.from("caja").select("*").order("fecha", { ascending: false });
     setMovimientos(data || []);
+  }
+
+  async function cargarProductos() {
+    const { data } = await supabase.from("productos").select("*").order("nombre");
+    setProductos(data || []);
   }
 
   async function guardarOrden() {
@@ -67,15 +74,12 @@ export default function App() {
     await supabase.from("ordenes").update({ estado }).eq("id", id);
     if (estado === "Entregado" && orden.importe) {
       await supabase.from("caja").insert([{
-        tipo: "ingreso",
-        categoria: "Servicio técnico",
+        tipo: "ingreso", categoria: "Servicio técnico",
         descripcion: `Orden #${id} - ${orden.cliente} - ${orden.equipo}`,
-        monto: parseFloat(orden.importe) || 0,
-        orden_id: id,
+        monto: parseFloat(orden.importe) || 0, orden_id: id,
       }]);
     }
-    cargarOrdenes();
-    cargarCaja();
+    cargarOrdenes(); cargarCaja();
   }
 
   async function guardarMovimiento() {
@@ -91,12 +95,57 @@ export default function App() {
     cargarCaja();
   }
 
+  async function guardarProducto() {
+    if (!formProducto.nombre || !formProducto.cantidad) return;
+    const datos = {
+      ...formProducto,
+      cantidad: parseInt(formProducto.cantidad),
+      precio_costo: parseFloat(formProducto.precio_costo) || 0,
+      precio_venta: parseFloat(formProducto.precio_venta) || 0,
+      stock_minimo: parseInt(formProducto.stock_minimo) || 3,
+    };
+    if (editandoProducto) {
+      await supabase.from("productos").update(datos).eq("id", editandoProducto);
+      setEditandoProducto(null);
+    } else {
+      await supabase.from("productos").insert([datos]);
+    }
+    setFormProducto({ nombre:"", categoria:"Accesorios celular", compatible_con:"", cantidad:"", precio_costo:"", precio_venta:"", stock_minimo:"3" });
+    cargarProductos();
+  }
+
+  async function eliminarProducto(id) {
+    if (!window.confirm("¿Eliminar este producto?")) return;
+    await supabase.from("productos").delete().eq("id", id);
+    cargarProductos();
+  }
+
+  function editarProducto(p) {
+    setFormProducto({ nombre:p.nombre, categoria:p.categoria, compatible_con:p.compatible_con||"", cantidad:p.cantidad, precio_costo:p.precio_costo, precio_venta:p.precio_venta, stock_minimo:p.stock_minimo });
+    setEditandoProducto(p.id);
+  }
+
+  async function ajustarStock(id, delta) {
+    const prod = productos.find(p => p.id === id);
+    const nueva = Math.max(0, prod.cantidad + delta);
+    await supabase.from("productos").update({ cantidad: nueva }).eq("id", id);
+    if (delta < 0 && prod.precio_venta) {
+      await supabase.from("caja").insert([{
+        tipo: "ingreso", categoria: "Venta accesorio",
+        descripcion: `Venta: ${prod.nombre}`,
+        monto: prod.precio_venta,
+      }]);
+      cargarCaja();
+    }
+    cargarProductos();
+  }
+
   function filtrarMovimientos() {
     const ahora = new Date();
     return movimientos.filter(m => {
       const fecha = new Date(m.fecha);
       if (vistaCaja === "dia") return fecha.toDateString() === ahora.toDateString();
-      if (vistaCaja === "semana") { const diff = (ahora - fecha) / (1000*60*60*24); return diff <= 7; }
+      if (vistaCaja === "semana") return (ahora - fecha) / (1000*60*60*24) <= 7;
       if (vistaCaja === "mes") return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
       return true;
     });
@@ -123,8 +172,7 @@ export default function App() {
       doc.text(`Fecha: ${new Date().toLocaleString()}`, 135, y + 32);
       doc.line(20, y + 36, 190, y + 36);
       autoTable(doc, {
-        startY: y + 42,
-        theme: "plain",
+        startY: y + 42, theme: "plain",
         body: [
           [`Cliente: ${orden.cliente}`, `Falla: ${orden.falla}`],
           [`Teléfono: ${orden.telefono}`, `Accesorios: ${orden.accesorios}`],
@@ -156,6 +204,7 @@ export default function App() {
   }
 
   const { ingresos, egresos, balance } = calcularTotales();
+  const stockBajo = productos.filter(p => p.cantidad <= p.stock_minimo);
 
   if (!sesion) {
     return (
@@ -165,25 +214,13 @@ export default function App() {
             <img src={logo} alt="Fix Lab" style={{width:"100%", borderRadius:"10px"}} />
           </div>
           <h2 style={{color:"white", textAlign:"center", marginBottom:"25px"}}>Iniciar Sesión</h2>
-          <input
-            placeholder="Email"
-            type="email"
-            value={loginForm.email}
-            onChange={e => setLoginForm({...loginForm, email: e.target.value})}
-            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"15px", boxSizing:"border-box"}}
-          />
-          <input
-            placeholder="Contraseña"
-            type="password"
-            value={loginForm.password}
-            onChange={e => setLoginForm({...loginForm, password: e.target.value})}
+          <input placeholder="Email" type="email" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})}
+            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"15px", boxSizing:"border-box"}} />
+          <input placeholder="Contraseña" type="password" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})}
             onKeyDown={e => e.key === "Enter" && login()}
-            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"10px", boxSizing:"border-box"}}
-          />
+            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"10px", boxSizing:"border-box"}} />
           {loginError && <p style={{color:"#e53e3e", marginBottom:"10px", fontSize:"14px"}}>{loginError}</p>}
-          <button onClick={login} style={{width:"100%", padding:"15px", background:"orange", color:"black", border:"none", borderRadius:"10px", cursor:"pointer", fontWeight:"bold", fontSize:"16px"}}>
-            Entrar
-          </button>
+          <button onClick={login} style={{width:"100%", padding:"15px", background:"orange", color:"black", border:"none", borderRadius:"10px", cursor:"pointer", fontWeight:"bold", fontSize:"16px"}}>Entrar</button>
         </div>
       </div>
     );
@@ -195,7 +232,9 @@ export default function App() {
         <nav>
           <button onClick={() => setSeccion("servicio")} className={seccion === "servicio" ? "active" : ""}>Servicio Técnico</button>
           <button onClick={() => setSeccion("caja")} className={seccion === "caja" ? "active" : ""}>Caja</button>
-          <button onClick={() => setSeccion("stock")} className={seccion === "stock" ? "active" : ""}>Stock</button>
+          <button onClick={() => setSeccion("stock")} className={seccion === "stock" ? "active" : ""}>
+            Stock {stockBajo.length > 0 && <span style={{background:"#e53e3e", color:"white", borderRadius:"50%", padding:"2px 7px", fontSize:"12px", marginLeft:"5px"}}>{stockBajo.length}</span>}
+          </button>
         </nav>
         <button onClick={logout} style={{marginTop:"auto", background:"#e53e3e", color:"white", border:"none", padding:"12px", borderRadius:"10px", cursor:"pointer", fontWeight:"bold", width:"100%"}}>
           Cerrar Sesión
@@ -312,7 +351,71 @@ export default function App() {
         )}
 
         {seccion === "stock" && (
-          <div className="formcard"><h2>Stock — Próximamente</h2></div>
+          <>
+            <div className="topcards">
+              <div className="card orange"><h2>{productos.length}</h2><p>Productos</p></div>
+              <div className="card" style={{border: stockBajo.length > 0 ? "2px solid #e53e3e" : "none"}}>
+                <h2 style={{color: stockBajo.length > 0 ? "#e53e3e" : "orange"}}>{stockBajo.length}</h2>
+                <p>Stock Bajo</p>
+              </div>
+              <div className="card">
+                <h2>${productos.reduce((a, p) => a + (p.precio_venta * p.cantidad), 0).toLocaleString()}</h2>
+                <p>Valor Stock</p>
+              </div>
+            </div>
+
+            {stockBajo.length > 0 && (
+              <div style={{background:"#2d1515", border:"1px solid #e53e3e", borderRadius:"12px", padding:"15px", marginBottom:"20px"}}>
+                <h3 style={{color:"#e53e3e", margin:"0 0 10px"}}>⚠ Stock bajo</h3>
+                {stockBajo.map(p => (
+                  <p key={p.id} style={{margin:"4px 0", color:"#ffaaaa"}}>{p.nombre} — {p.cantidad} unidades</p>
+                ))}
+              </div>
+            )}
+
+            <div className="formcard">
+              <h2>{editandoProducto ? "Editar Producto" : "Nuevo Producto"}</h2>
+              <div className="grid">
+                <input placeholder="Nombre del producto" value={formProducto.nombre} onChange={e => setFormProducto({...formProducto, nombre: e.target.value})} />
+                <select value={formProducto.categoria} onChange={e => setFormProducto({...formProducto, categoria: e.target.value})}>
+                  {categoriasProducto.map(c => <option key={c}>{c}</option>)}
+                </select>
+                <input placeholder="Compatible con (ej: Samsung A05, iPhone 13)" value={formProducto.compatible_con} onChange={e => setFormProducto({...formProducto, compatible_con: e.target.value})} />
+                <input placeholder="Cantidad" type="number" value={formProducto.cantidad} onChange={e => setFormProducto({...formProducto, cantidad: e.target.value})} />
+                <input placeholder="Precio costo" type="number" value={formProducto.precio_costo} onChange={e => setFormProducto({...formProducto, precio_costo: e.target.value})} />
+                <input placeholder="Precio venta" type="number" value={formProducto.precio_venta} onChange={e => setFormProducto({...formProducto, precio_venta: e.target.value})} />
+                <input placeholder="Stock mínimo (alerta)" type="number" value={formProducto.stock_minimo} onChange={e => setFormProducto({...formProducto, stock_minimo: e.target.value})} />
+              </div>
+              <div style={{display:"flex", gap:"10px"}}>
+                <button className="savebtn" onClick={guardarProducto}>{editandoProducto ? "Actualizar" : "Agregar Producto"}</button>
+                {editandoProducto && <button className="savebtn" style={{background:"#555"}} onClick={() => { setEditandoProducto(null); setFormProducto({ nombre:"", categoria:"Accesorios celular", compatible_con:"", cantidad:"", precio_costo:"", precio_venta:"", stock_minimo:"3" }); }}>Cancelar</button>}
+              </div>
+            </div>
+
+            <div className="orders">
+              <h2>Inventario</h2>
+              {productos.map(p => (
+                <div className="ordercard" key={p.id} style={{borderLeft: p.cantidad <= p.stock_minimo ? "3px solid #e53e3e" : "none"}}>
+                  <div>
+                    <h3>{p.nombre}</h3>
+                    <p style={{color:"#888"}}>{p.categoria} {p.compatible_con && `· ${p.compatible_con}`}</p>
+                    <p>Costo: ${p.precio_costo} · Venta: ${p.precio_venta}</p>
+                  </div>
+                  <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"8px"}}>
+                    <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                      <button onClick={() => ajustarStock(p.id, -1)} style={{background:"#e53e3e", color:"white", border:"none", borderRadius:"6px", padding:"5px 12px", cursor:"pointer", fontSize:"18px", fontWeight:"bold"}}>−</button>
+                      <span style={{fontSize:"22px", fontWeight:"bold", color: p.cantidad <= p.stock_minimo ? "#e53e3e" : "white"}}>{p.cantidad}</span>
+                      <button onClick={() => ajustarStock(p.id, 1)} style={{background:"#48bb78", color:"white", border:"none", borderRadius:"6px", padding:"5px 12px", cursor:"pointer", fontSize:"18px", fontWeight:"bold"}}>+</button>
+                    </div>
+                    <div style={{display:"flex", gap:"8px"}}>
+                      <button className="printbtn" onClick={() => editarProducto(p)}>Editar</button>
+                      <button className="deletebtn" onClick={() => eliminarProducto(p.id)}>Eliminar</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
       </main>
@@ -322,7 +425,7 @@ export default function App() {
         body { margin: 0; font-family: Arial; background: #111; }
         .app { display: flex; min-height: 100vh; background: #111; color: white; }
         .sidebar { width: 220px; background: #181818; padding: 30px 20px; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; }
-        .sidebar nav { display: flex; flex-direction: column; gap: 10px; }
+        .sidebar nav { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         .sidebar button { background: #222; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 14px; }
         .sidebar button:hover, .sidebar button.active { background: orange; color: black; }
         .content { flex: 1; padding: 30px; }
