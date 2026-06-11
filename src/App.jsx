@@ -70,7 +70,7 @@ export default function App() {
     cargarOrdenes();
   }
 
-  async function cambiarEstado(id, estado, orden) {
+ async function cambiarEstado(id, estado, orden) {
     await supabase.from("ordenes").update({ estado }).eq("id", id);
     if (estado === "Entregado" && orden.importe) {
       await supabase.from("caja").insert([{
@@ -78,6 +78,10 @@ export default function App() {
         descripcion: `Orden #${id} - ${orden.cliente} - ${orden.equipo}`,
         monto: parseFloat(orden.importe) || 0, orden_id: id,
       }]);
+    }
+    if (orden.telefono) {
+      const msg = encodeURIComponent(`Hola ${orden.cliente}! Te informamos que tu equipo *${orden.equipo}* cambió su estado a *${estado}*. Ante cualquier consulta escribinos. - Fix Lab`);
+      window.open(`https://wa.me/549${orden.telefono}?text=${msg}`, "_blank");
     }
     cargarOrdenes(); cargarCaja();
   }
@@ -263,7 +267,15 @@ export default function App() {
                 <input placeholder="Importe" value={form.importe} onChange={e => setForm({...form, importe: e.target.value})} />
                 <input placeholder="Observaciones" value={form.observaciones} onChange={e => setForm({...form, observaciones: e.target.value})} />
               </div>
-              <button className="savebtn" onClick={guardarOrden}>Guardar Orden</button>
+              <button className="savebtn" onClick={async () => {
+  const { data } = await supabase.from("ordenes").insert([{ ...form, estado: "Ingresado" }]).select().single();
+  if (data && form.telefono) {
+    const msg = encodeURIComponent(`Hola ${form.cliente}! Recibimos tu equipo *${form.equipo}* en Fix Lab. Tu número de orden es *#${data.id}*. Te avisamos cuando esté listo! - Fix Lab`);
+    window.open(`https://wa.me/549${form.telefono}?text=${msg}`, "_blank");
+  }
+  setForm({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
+  cargarOrdenes();
+}}>Guardar y avisar por WhatsApp</button>
             </div>
             <div className="orders">
               <h2>Órdenes Técnicas</h2>
