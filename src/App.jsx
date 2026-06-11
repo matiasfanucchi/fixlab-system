@@ -81,7 +81,7 @@ export default function App() {
     }
     if (orden.telefono) {
       const msg = encodeURIComponent(`Hola ${orden.cliente}! Te informamos que tu equipo *${orden.equipo}* cambió su estado a *${estado}*. Ante cualquier consulta escribinos. - Fix Lab`);
-      window.open(`https://wa.me/549${orden.telefono}?text=${msg}`, "_blank");
+      window.open(`https://api.whatsapp.com/send?phone=549${orden.telefono}&text=${msg}`, "_blank");
     }
     cargarOrdenes(); cargarCaja();
   }
@@ -271,7 +271,7 @@ export default function App() {
   const { data } = await supabase.from("ordenes").insert([{ ...form, estado: "Ingresado" }]).select().single();
   if (data && form.telefono) {
     const msg = encodeURIComponent(`Hola ${form.cliente}! Recibimos tu equipo *${form.equipo}* en Fix Lab. Tu número de orden es *#${data.id}*. Te avisamos cuando esté listo! - Fix Lab`);
-    window.open(`https://wa.me/549${form.telefono}?text=${msg}`, "_blank");
+   window.open(`https://api.whatsapp.com/send?phone=549${orden.telefono}&text=${msg}`, "_blank");
   }
   setForm({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
   cargarOrdenes();
