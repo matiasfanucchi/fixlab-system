@@ -12,12 +12,34 @@ const supabase = createClient(
 const estados = ["Ingresado","Diagnóstico","En reparación","Esperando repuesto","Listo","Entregado"];
 
 export default function App() {
+  const [sesion, setSesion] = useState(null);
+  const [loginForm, setLoginForm] = useState({ email:"", password:"" });
+  const [loginError, setLoginError] = useState("");
   const [seccion, setSeccion] = useState("servicio");
   const [ordenes, setOrdenes] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
-  const [vistaСaja, setVistaCaja] = useState("dia");
+  const [vistaCaja, setVistaCaja] = useState("dia");
   const [form, setForm] = useState({ cliente:"", telefono:"", equipo:"", imei:"", falla:"", password:"", accesorios:"", observaciones:"", importe:"" });
   const [formCaja, setFormCaja] = useState({ tipo:"ingreso", categoria:"Venta accesorio", descripcion:"", monto:"" });
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSesion(session));
+    supabase.auth.onAuthStateChange((_event, session) => setSesion(session));
+  }, []);
+
+  useEffect(() => {
+    if (sesion) { cargarOrdenes(); cargarCaja(); }
+  }, [sesion]);
+
+  async function login() {
+    setLoginError("");
+    const { error } = await supabase.auth.signInWithPassword({ email: loginForm.email, password: loginForm.password });
+    if (error) setLoginError("Email o contraseña incorrectos");
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+  }
 
   async function cargarOrdenes() {
     const { data } = await supabase.from("ordenes").select("*").order("id", { ascending: false });
@@ -73,9 +95,9 @@ export default function App() {
     const ahora = new Date();
     return movimientos.filter(m => {
       const fecha = new Date(m.fecha);
-      if (vistaСaja === "dia") return fecha.toDateString() === ahora.toDateString();
-      if (vistaСaja === "semana") { const diff = (ahora - fecha) / (1000*60*60*24); return diff <= 7; }
-      if (vistaСaja === "mes") return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
+      if (vistaCaja === "dia") return fecha.toDateString() === ahora.toDateString();
+      if (vistaCaja === "semana") { const diff = (ahora - fecha) / (1000*60*60*24); return diff <= 7; }
+      if (vistaCaja === "mes") return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
       return true;
     });
   }
@@ -133,9 +155,39 @@ export default function App() {
     doc.save(`orden-${orden.id}.pdf`);
   }
 
-  useEffect(() => { cargarOrdenes(); cargarCaja(); }, []);
-
   const { ingresos, egresos, balance } = calcularTotales();
+
+  if (!sesion) {
+    return (
+      <div style={{display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:"#111"}}>
+        <div style={{background:"#1d1d1d", padding:"40px", borderRadius:"20px", width:"360px"}}>
+          <div style={{textAlign:"center", marginBottom:"30px"}}>
+            <img src={logo} alt="Fix Lab" style={{width:"100%", borderRadius:"10px"}} />
+          </div>
+          <h2 style={{color:"white", textAlign:"center", marginBottom:"25px"}}>Iniciar Sesión</h2>
+          <input
+            placeholder="Email"
+            type="email"
+            value={loginForm.email}
+            onChange={e => setLoginForm({...loginForm, email: e.target.value})}
+            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"15px", boxSizing:"border-box"}}
+          />
+          <input
+            placeholder="Contraseña"
+            type="password"
+            value={loginForm.password}
+            onChange={e => setLoginForm({...loginForm, password: e.target.value})}
+            onKeyDown={e => e.key === "Enter" && login()}
+            style={{width:"100%", padding:"15px", background:"#2a2a2a", border:"none", borderRadius:"10px", color:"white", marginBottom:"10px", boxSizing:"border-box"}}
+          />
+          {loginError && <p style={{color:"#e53e3e", marginBottom:"10px", fontSize:"14px"}}>{loginError}</p>}
+          <button onClick={login} style={{width:"100%", padding:"15px", background:"orange", color:"black", border:"none", borderRadius:"10px", cursor:"pointer", fontWeight:"bold", fontSize:"16px"}}>
+            Entrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -145,6 +197,9 @@ export default function App() {
           <button onClick={() => setSeccion("caja")} className={seccion === "caja" ? "active" : ""}>Caja</button>
           <button onClick={() => setSeccion("stock")} className={seccion === "stock" ? "active" : ""}>Stock</button>
         </nav>
+        <button onClick={logout} style={{marginTop:"auto", background:"#e53e3e", color:"white", border:"none", padding:"12px", borderRadius:"10px", cursor:"pointer", fontWeight:"bold", width:"100%"}}>
+          Cerrar Sesión
+        </button>
       </aside>
 
       <main className="content">
@@ -197,20 +252,16 @@ export default function App() {
         {seccion === "caja" && (
           <>
             <div className="topcards">
-              <div className="card" style={{borderColor:"#48bb78", border:"2px solid #48bb78"}}>
-                <h2 style={{color:"#48bb78"}}>${ingresos.toFixed(2)}</h2>
-                <p>Ingresos</p>
+              <div className="card" style={{border:"2px solid #48bb78"}}>
+                <h2 style={{color:"#48bb78"}}>${ingresos.toFixed(2)}</h2><p>Ingresos</p>
               </div>
               <div className="card" style={{border:"2px solid #e53e3e"}}>
-                <h2 style={{color:"#e53e3e"}}>${egresos.toFixed(2)}</h2>
-                <p>Egresos</p>
+                <h2 style={{color:"#e53e3e"}}>${egresos.toFixed(2)}</h2><p>Egresos</p>
               </div>
               <div className="card orange">
-                <h2>${balance.toFixed(2)}</h2>
-                <p>Balance</p>
+                <h2>${balance.toFixed(2)}</h2><p>Balance</p>
               </div>
             </div>
-
             <div className="formcard">
               <h2>Nuevo Movimiento</h2>
               <div className="grid">
@@ -230,7 +281,6 @@ export default function App() {
               </div>
               <button className="savebtn" onClick={guardarMovimiento}>Guardar Movimiento</button>
             </div>
-
             <div className="orders">
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px"}}>
                 <h2 style={{margin:0}}>Movimientos</h2>
@@ -238,7 +288,7 @@ export default function App() {
                   {["dia","semana","mes"].map(v => (
                     <button key={v} onClick={() => setVistaCaja(v)}
                       style={{padding:"8px 16px", borderRadius:"8px", border:"none", cursor:"pointer", fontWeight:"bold",
-                        background: vistaСaja === v ? "orange" : "#333", color: vistaСaja === v ? "black" : "white"}}>
+                        background: vistaCaja === v ? "orange" : "#333", color: vistaCaja === v ? "black" : "white"}}>
                       {v === "dia" ? "Hoy" : v === "semana" ? "Semana" : "Mes"}
                     </button>
                   ))}
@@ -262,9 +312,7 @@ export default function App() {
         )}
 
         {seccion === "stock" && (
-          <div className="formcard">
-            <h2>Stock — Próximamente</h2>
-          </div>
+          <div className="formcard"><h2>Stock — Próximamente</h2></div>
         )}
 
       </main>
@@ -273,7 +321,7 @@ export default function App() {
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial; background: #111; }
         .app { display: flex; min-height: 100vh; background: #111; color: white; }
-        .sidebar { width: 220px; background: #181818; padding: 30px 20px; border-right: 1px solid #2a2a2a; }
+        .sidebar { width: 220px; background: #181818; padding: 30px 20px; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; }
         .sidebar nav { display: flex; flex-direction: column; gap: 10px; }
         .sidebar button { background: #222; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 14px; }
         .sidebar button:hover, .sidebar button.active { background: orange; color: black; }
