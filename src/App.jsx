@@ -78,52 +78,54 @@ export default function App() {
   };
 
   const generarPDF = (orden) => {
-    const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const pageWidth = doc.internal.pageSize.getWidth();
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
+  // Función para generar UNA copia del comprobante
+  const generarCopia = (startY) => {
     // Header oscuro
     doc.setFillColor(20, 23, 21);
-    doc.rect(0, 0, pageWidth, 25, 'F');
+    doc.rect(0, startY, pageWidth, 25, 'F');
 
     // Logo
-    doc.addImage(logo, 'PNG', 10, 8, 12, 12);
+    doc.addImage(logo, 'PNG', 10, startY + 8, 12, 12);
 
     // Título
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
-    doc.text("FIX", 25, 15);
+    doc.text("FIX", 25, startY + 15);
     doc.setTextColor(255, 122, 26);
-    doc.text("LAB", 35, 15);
+    doc.text("LAB", 35, startY + 15);
 
     doc.setTextColor(255, 122, 26);
     doc.setFontSize(10);
-    doc.text("Reparación de celulares y PC", 25, 20);
+    doc.text("Reparación de celulares y PC", 25, startY + 20);
 
     // Línea divisoria
     doc.setDrawColor(255, 122, 26);
     doc.setLineWidth(0.5);
-    doc.line(10, 28, pageWidth - 10, 28);
+    doc.line(10, startY + 28, pageWidth - 10, startY + 28);
 
     // Contenido principal
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text(`ORDEN # ${orden.id}`, 10, 35);
+    doc.text(`ORDEN # ${orden.id}`, 10, startY + 35);
     doc.setFont(undefined, 'normal');
     doc.setFontSize(10);
 
     // Fecha derecha
     const fecha = new Date(orden.fecha).toLocaleString('es-AR');
-    doc.text(`Fecha: ${fecha}`, pageWidth - 60, 35);
+    doc.text(`Fecha: ${fecha}`, pageWidth - 60, startY + 35);
 
     // Línea
     doc.setLineWidth(0.3);
     doc.setDrawColor(150, 150, 150);
-    doc.line(10, 38, pageWidth - 10, 38);
+    doc.line(10, startY + 38, pageWidth - 10, startY + 38);
 
     // Datos cliente (2 columnas)
-    let yPos = 45;
+    let yPos = startY + 45;
     const col1X = 10;
     const col2X = pageWidth / 2;
 
@@ -177,7 +179,7 @@ export default function App() {
     doc.setLineWidth(0.3);
     doc.line(10, yPos, pageWidth - 10, yPos);
 
-    // Términos y condiciones en caja
+    // Términos y condiciones
     yPos += 8;
     doc.setFont(undefined, 'bold');
     doc.setFontSize(9);
@@ -192,7 +194,7 @@ export default function App() {
     doc.text(splitTerms, 10, yPos);
 
     // Espacios para firmas
-    yPos = pageHeight - 35;
+    yPos = startY + 105;
     doc.setLineWidth(0.5);
     doc.setDrawColor(0, 0, 0);
     doc.line(15, yPos, 50, yPos);
@@ -208,17 +210,31 @@ export default function App() {
     doc.text("Firma Técnico", pageWidth - 50, yPos);
 
     // Footer oscuro
-    yPos = pageHeight - 15;
+    yPos = startY + 125;
     doc.setFillColor(20, 23, 21);
     doc.rect(0, yPos, pageWidth, 15, 'F');
 
     doc.setFontSize(10);
     doc.setTextColor(255, 122, 26);
     doc.setFont(undefined, 'bold');
-    doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", pageWidth / 2, pageHeight - 8, { align: 'center' });
-
-    doc.save(`orden-${orden.id}-${orden.cliente}.pdf`);
+    doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", pageWidth / 2, yPos + 8, { align: 'center' });
   };
+
+  // Generar primera copia
+  generarCopia(0);
+
+  // Generar línea de corte
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineDash([5, 5]); // Línea punteada
+  doc.line(10, 140, pageWidth - 10, 140);
+  doc.setLineDash([]); // Volver a línea normal
+
+  // Generar segunda copia
+  generarCopia(145);
+
+  doc.save(`orden-${orden.id}-${orden.cliente}.pdf`);
+};
 
   const generarLinkWhatsApp = (orden) => {
     const mensaje = encodeURIComponent(`Hola ${orden.cliente}, adjunto tu comprobante técnico de la orden #${orden.id}. Equipo: ${orden.equipo} - Estado: ${orden.estado}`);
