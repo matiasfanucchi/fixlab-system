@@ -125,7 +125,7 @@ useEffect(() => {
   return (
     <div style={{ background: "#0c0e0d", color: "#eef0ee", minHeight: "100vh", fontFamily: "sans-serif" }}>
       <div style={{ background: "#141715", borderBottom: "1px solid #2a2e2b", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>FIXLAB</h1>
+       <h1 style={{ margin: 0, color: "#eef0ee", fontSize: "24px", fontWeight: "600" }}>🔧 FIX<span style={{ color: "#ff7a1a" }}>LAB</span></h1>
         <button onClick={logout} style={{ background: "#6ee7a0", color: "#000", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
           Cerrar Sesión
         </button>
