@@ -21,7 +21,7 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
 
-useEffect(() => {
+  useEffect(() => {
   supabase.auth.onAuthStateChange((event, session) => {
     setSession(session);
   });
