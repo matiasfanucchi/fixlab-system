@@ -337,117 +337,126 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
     setForm({});
   };
 
-  return (
-    <div>
-      <h2>Servicio Técnico</h2>
-      <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
-        <input 
-          placeholder="Cliente" 
-          value={form.cliente || ""} 
-          onChange={(e) => setForm({ ...form, cliente: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="Teléfono" 
-          value={form.telefono || ""} 
-          onChange={(e) => setForm({ ...form, telefono: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="Equipo" 
-          value={form.equipo || ""} 
-          onChange={(e) => setForm({ ...form, equipo: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="Falla" 
-          value={form.falla || ""} 
-          onChange={(e) => setForm({ ...form, falla: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="IMEI/Serie" 
-          value={form.imei || ""} 
-          onChange={(e) => setForm({ ...form, imei: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="Accesorios" 
-          value={form.accesorios || ""} 
-          onChange={(e) => setForm({ ...form, accesorios: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <input 
-          placeholder="Observaciones" 
-          value={form.observaciones || ""} 
-          onChange={(e) => setForm({ ...form, observaciones: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <select 
-          value={form.estado || "Ingresado"} 
-          onChange={(e) => setForm({ ...form, estado: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
-          <option>Ingresado</option>
-          <option>Diagnóstico</option>
-          <option>En reparación</option>
-          <option>Esperando repuesto</option>
-          <option>Listo</option>
-          <option>Entregado</option>
-        </select>
-        <input 
-          placeholder="Importe" 
-          value={form.importe || ""} 
-          onChange={(e) => setForm({ ...form, importe: e.target.value })} 
-          style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-        />
-        <div style={{ display: "flex", gap: "8px" }}>
+ return (
+  <div>
+    <h2>Servicio Técnico</h2>
+    <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
+      <input 
+        placeholder="Cliente" 
+        value={form.cliente || ""} 
+        onChange={(e) => setForm({ ...form, cliente: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="Teléfono" 
+        value={form.telefono || ""} 
+        onChange={(e) => setForm({ ...form, telefono: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="Equipo" 
+        value={form.equipo || ""} 
+        onChange={(e) => setForm({ ...form, equipo: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="Falla" 
+        value={form.falla || ""} 
+        onChange={(e) => setForm({ ...form, falla: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="IMEI/Serie" 
+        value={form.imei || ""} 
+        onChange={(e) => setForm({ ...form, imei: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="Accesorios" 
+        value={form.accesorios || ""} 
+        onChange={(e) => setForm({ ...form, accesorios: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <input 
+        placeholder="Observaciones" 
+        value={form.observaciones || ""} 
+        onChange={(e) => setForm({ ...form, observaciones: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <select 
+        value={form.estado || "Ingresado"} 
+        onChange={(e) => setForm({ ...form, estado: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+        <option>Ingresado</option>
+        <option>Diagnóstico</option>
+        <option>En reparación</option>
+        <option>Esperando repuesto</option>
+        <option>Listo</option>
+        <option>Entregado</option>
+      </select>
+      <input 
+        placeholder="Importe" 
+        value={form.importe || ""} 
+        onChange={(e) => setForm({ ...form, importe: e.target.value })} 
+        style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
+      />
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button 
+          onClick={handleSave} 
+          style={{ flex: 1, background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
+          {editingId ? "Actualizar" : "Guardar"}
+        </button>
+        {editingId && (
           <button 
-            onClick={handleSave} 
-            style={{ flex: 1, background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
-            {editingId ? "Actualizar" : "Guardar"}
+            onClick={handleCancel} 
+            style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
+            Cancelar
           </button>
-          {editingId && (
-            <button 
-              onClick={handleCancel} 
-              style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
-              Cancelar
-            </button>
-          )}
-        </div>
-      </div>
-      <div>
-        {ordenes.map((orden) => (
-          <div key={orden.id} style={{ background: "#141715", padding: "12px", marginBottom: "8px", borderRadius: "6px" }}>
-            <div style={{ marginBottom: "8px" }}>
-              <strong>{orden.cliente}</strong> - {orden.equipo} - <span style={{ color: "#ff7a1a" }}>{orden.estado}</span>
-            </div>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <button 
-                onClick={() => handleEdit(orden)} 
-                style={{ background: "#3b82f6", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-                Editar
-              </button>
-              <button 
-                onClick={() => generarPDF(orden)} 
-                style={{ background: "#ff7a1a", color: "#000", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-                PDF
-              </button>
-              <button 
-                onClick={() => generarLinkWhatsApp(orden)} 
-                style={{ background: "#25d366", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-                WhatsApp
-              </button>
-              <button 
-                onClick={() => eliminarOrden(orden.id)} 
-                style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-                Eliminar
-              </button>
-            </div>
-          </div>
-        ))}
+        )}
       </div>
     </div>
-  );
+    <div>
+      {ordenes.map((orden) => (
+        <div key={orden.id} style={{ background: "#141715", padding: "12px", marginBottom: "8px", borderRadius: "6px" }}>
+          <div style={{ marginBottom: "8px" }}>
+            <strong>{orden.cliente}</strong> - {orden.equipo}
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <select 
+              value={orden.estado || "Ingresado"}
+              onChange={(e) => {
+                const nuevoEstado = e.target.value;
+                actualizarOrden(orden.id, { estado: nuevoEstado });
+                
+                // Abrir WhatsApp automáticamente
+                const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Te informamos que tu equipo ${orden.equipo} cambió su estado a ${nuevoEstado}. Ante cualquier consulta escribinos. - Fix Lab`);
+                const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
+                window.open(link, '_blank');
+              }}
+              style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
+              <option>Ingresado</option>
+              <option>Diagnóstico</option>
+              <option>En reparación</option>
+              <option>Esperando repuesto</option>
+              <option>Listo</option>
+              <option>Entregado</option>
+            </select>
+            <button 
+              onClick={() => generarPDF(orden)} 
+              style={{ background: "#ff7a1a", color: "#000", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
+              PDF
+            </button>
+            <button 
+              onClick={() => eliminarOrden(orden.id)} 
+              style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 }
 
 function Caja({ caja, setCaja, ordenes }) {
