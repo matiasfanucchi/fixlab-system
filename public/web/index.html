@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Lab - Reparación de Celulares y PC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #0c0e0d 0%, #141715 100%);
+            color: white;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo span:last-child {
+            color: #ff7a1a;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 30px;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: #ff7a1a;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0c0e0d 0%, #1a1f1c 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .hero h1 span {
+            color: #ff7a1a;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            max-width: 600px;
+            margin-bottom: 40px;
+            color: #ccc;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 40px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #ff7a1a;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background: #ff9540;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 122, 26, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6ee7a0;
+            color: #000;
+        }
+        
+        .btn-secondary:hover {
+            background: #7fefb3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(110, 231, 160, 0.4);
+        }
+        
+        /* Secciones */
+        section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+        
+        .section-title {
+            font-size: 36px;
+            margin-bottom: 40px;
+            text-align: center;
+            color: #0c0e0d;
+        }
+        
+        .section-title span {
+            color: #ff7a1a;
+        }
+        
+        /* Quiénes Somos */
+        #quienes-somos {
+            background: #f9f9f9;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+        
+        .content-grid p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        /* Visión */
+        #vision {
+            background: white;
+        }
+        
+        .vision-box {
+            background: linear-gradient(135deg, #0c0e0d 0%, #141715 100%);
+            color: white;
+            padding: 50px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .vision-box p {
+            font-size: 18px;
+            line-height: 2;
+        }
+        
+        /* Ubicación */
+        #ubicacion {
+            background: #f9f9f9;
+        }
+        
+        .ubicacion-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+        
+        .ubicacion-info h3 {
+            color: #ff7a1a;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .ubicacion-info p {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+        
+        .ubicacion-info a {
+            color: #ff7a1a;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .ubicacion-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .map {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        /* Footer */
+        footer {
+            background: #0c0e0d;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        footer p {
+            margin-bottom: 10px;
+        }
+        
+        footer a {
+            color: #ff7a1a;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            nav {
+                display: flex;
+                gap: 15px;
+            }
+            
+            nav a {
+                margin-left: 0;
+            }
+            
+            .hero h1 {
+                font-size: 32px;
+            }
+            
+            .hero p {
+                font-size: 16px;
+            }
+            
+            .content-grid,
+            .ubicacion-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .section-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                🔧 FIX<span>LAB</span>
+            </div>
+            <nav>
+                <a href="#quienes-somos">Quiénes Somos</a>
+                <a href="#vision">Visión</a>
+                <a href="#ubicacion">Ubicación</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>FIX<span>LAB</span></h1>
+        <p>Reparación profesional de celulares y computadoras en Córdoba</p>
+        <div class="btn-group">
+            <a href="/" class="btn btn-primary">Ingresar al Sistema</a>
+            <a href="/web/tienda.html" class="btn btn-secondary">Ir a Tienda</a>
+        </div>
+    </section>
+
+    <!-- Quiénes Somos -->
+    <section id="quienes-somos">
+        <h2 class="section-title">¿Quiénes <span>Somos?</span></h2>
+        <div class="content-grid">
+            <div>
+                <p>En Fix Lab somos un equipo de técnicos especializados en la reparación de dispositivos electrónicos con más de 10 años de experiencia en el mercado.</p>
+                <p>Nuestro compromiso es ofrecer un servicio de calidad, con garantía y atención personalizada a cada cliente.</p>
+                <p>Contamos con herramientas de última generación y técnicos certificados para diagnosticar y reparar cualquier falla en tu dispositivo.</p>
+            </div>
+            <div>
+                <p><strong>¿Por qué elegirnos?</strong></p>
+                <p>✓ Diagnóstico gratuito</p>
+                <p>✓ Garantía en todas nuestras reparaciones</p>
+                <p>✓ Técnicos especializados</p>
+                <p>✓ Atención rápida y eficiente</p>
+                <p>✓ Precios competitivos</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visión -->
+    <section id="vision">
+        <h2 class="section-title">Nuestra <span>Visión</span></h2>
+        <div class="vision-box">
+            <p>Ser el taller de reparación de referencia en Córdoba, brindando soluciones confiables y de calidad a nuestros clientes, manteniendo altos estándares de profesionalismo y atención al cliente.</p>
+        </div>
+    </section>
+
+    <!-- Ubicación -->
+    <section id="ubicacion">
+        <h2 class="section-title">Nuestra <span>Ubicación</span></h2>
+        <div class="ubicacion-content">
+            <div class="ubicacion-info">
+                <h3>📍 Fix Lab Córdoba</h3>
+                <p><strong>Dirección:</strong> Maestro Vidal 1379, Local 2, Córdoba</p>
+                <p><strong>Teléfono:</strong> <a href="tel:+5493516789960">+54 9 3516 789960</a></p>
+                <p><strong>WhatsApp:</strong> <a href="https://wa.me/5493516789960">Contactanos por WhatsApp</a></p>
+                <p><strong>Email:</strong> <a href="mailto:fixlabcordoba@gmail.com">fixlabcordoba@gmail.com</a></p>
+                <p><strong>Horario:</strong> Lunes a Viernes 9:00 - 18:00 | Sábado 10:00 - 14:00</p>
+            </div>
+            <iframe class="map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3410.6789472645835!2d-64.18876!3d-31.42173!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95d18a1234567890%3A0x1234567890abcdef!2sMaestro%20Vidal%201379%2C%20Córdoba!5e0!3m2!1ses!2sar!4v1234567890" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Fix Lab - Reparación de Celulares y PC</p>
+        <p>Maestro Vidal 1379, Local 2 - Córdoba, Argentina</p>
+        <p><a href="https://wa.me/5493516789960">WhatsApp</a> | <a href="mailto:fixlabcordoba@gmail.com">Email</a></p>
+    </footer>
+</body>
+</html>
