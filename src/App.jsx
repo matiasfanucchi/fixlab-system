@@ -97,12 +97,12 @@ useEffect(() => {
     return (
       <div style={{ background: "#0c0e0d", color: "#eef0ee", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif" }}>
         <div style={{ background: "#141715", padding: "32px", borderRadius: "12px", width: "300px", border: "1px solid #2a2e2b" }}>
-          <img src={logo} alt="Fix Lab" style={{ width: "60px", marginBottom: "20px" }} />
+          <div style={{ fontSize: "40px", marginBottom: "20px" }}>🔧</div>
           <h1 style={{ marginBottom: "24px" }}>Iniciar Sesión</h1>
           {loginError && <p style={{ color: "#e53e3e", marginBottom: "12px" }}>{loginError}</p>}
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Email" 
             value={loginForm.email}
             onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
             style={{ width: "100%", padding: "10px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "6px", color: "#eef0ee" }}
