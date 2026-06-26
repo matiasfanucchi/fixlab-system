@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+<header style={{background:'#141715',borderBottom:'1px solid #2a2e2b',padding:'16px 24px',position:'sticky',top:0,zIndex:50}}>
+  <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+    <h1 style={{fontFamily:'JetBrains Mono',fontSize:'18px',fontWeight:600,color:'#eef0ee',margin:0}}>FIX<span style={{color:'#ff7a1a'}}>LAB</span></h1>
+    <button onClick={logout} style={{background:'#6ee7a0',color:'#000',border:'none',padding:'8px 16px',borderRadius:'6px',cursor:'pointer',fontWeight:600,fontSize:'13px'}}>Cerrar Sesión</button>
+  </div>
+</header>
+
 import { createClient } from "@supabase/supabase-js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
