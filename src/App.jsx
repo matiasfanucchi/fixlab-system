@@ -21,16 +21,19 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
 
-  useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-    });
-    if (session) {
-      cargarOrdenes();
-      cargarCaja();
-      cargarProductos();
-    }
-  }, [session]);
+useEffect(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    setSession(session);
+  });
+}, []);
+
+useEffect(() => {
+  if (session) {
+    cargarOrdenes();
+    cargarCaja();
+    cargarProductos();
+  }
+}, [session]);
 
   const login = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
