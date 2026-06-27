@@ -200,8 +200,10 @@ export default function App() {
     doc.line(15, yPos, 50, yPos);
     doc.line(pageWidth - 55, yPos, pageWidth - 20, yPos);
 
-    // Agregar firma digital
-    doc.addImage(firma, 'PNG', pageWidth - 55, yPos - 25, 30, 20);
+    // Agregar firma digital (solo en primera copia)
+    if (startY === 0) {
+    doc.addImage(firma, 'PNG', pageWidth - 55, yPos + 40, 30, 20);
+  }
 
     yPos += 5;
     doc.setFontSize(9);
