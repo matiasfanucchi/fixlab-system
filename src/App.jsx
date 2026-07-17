@@ -48,12 +48,12 @@ export default function App() {
   };
 
   const cargarOrdenes = async () => {
-    const { data } = await supabase.from("ordenes").select("*");
+    const { data } = await supabase.from("ordenes").select("*").order("id", { ascending: false });
     setOrdenes(data || []);
   };
 
   const cargarCaja = async () => {
-    const { data } = await supabase.from("caja").select("*");
+    const { data } = await supabase.from("caja").select("*").order("fecha", { ascending: false });
     setCaja(data || []);
   };
 
@@ -63,8 +63,13 @@ export default function App() {
   };
 
   const guardarOrden = async (orden) => {
-    const { error } = await supabase.from("ordenes").insert([orden]);
-    if (!error) cargarOrdenes();
+    const { error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
+    if (!error) {
+      cargarOrdenes();
+      const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo ${orden.equipo} ha sido registrado en Fix Lab. Orden #${orden.id}. Ante cualquier consulta escribinos. - Fix Lab`);
+      const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
+      setTimeout(() => window.open(link, '_blank'), 500);
+    }
   };
 
   const actualizarOrden = async (id, updates) => {
@@ -77,171 +82,122 @@ export default function App() {
     cargarOrdenes();
   };
 
-  const generarPDF = (orden) => {
-  const doc = new jsPDF();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const pageWidth = doc.internal.pageSize.getWidth();
-
-  // Función para generar UNA copia del comprobante
-  const generarCopia = (startY) => {
-    // Header oscuro
-    doc.setFillColor(20, 23, 21);
-    doc.rect(0, startY, pageWidth, 25, 'F');
-
-    // Logo
-    doc.addImage(logo, 'PNG', 10, startY + 8, 12, 12);
-
-    // Título
-    doc.setFontSize(20);
-    doc.setTextColor(255, 255, 255);
-    doc.text("FIX", 25, startY + 15);
-    doc.setTextColor(255, 122, 26);
-    doc.text("LAB", 35, startY + 15);
-
-    doc.setTextColor(255, 122, 26);
-    doc.setFontSize(10);
-    doc.text("Reparación de celulares y PC", 25, startY + 20);
-
-    // Línea divisoria
-    doc.setDrawColor(255, 122, 26);
-    doc.setLineWidth(0.5);
-    doc.line(10, startY + 28, pageWidth - 10, startY + 28);
-
-    // Contenido principal
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`ORDEN # ${orden.id}`, 10, startY + 35);
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(10);
-
-    // Fecha derecha
-    const fecha = new Date(orden.fecha).toLocaleString('es-AR');
-    doc.text(`Fecha: ${fecha}`, pageWidth - 60, startY + 35);
-
-    // Línea
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(150, 150, 150);
-    doc.line(10, startY + 38, pageWidth - 10, startY + 38);
-
-    // Datos cliente (2 columnas)
-    let yPos = startY + 45;
-    const col1X = 10;
-    const col2X = pageWidth / 2;
-
-    // Columna izquierda
-    doc.setFont(undefined, 'bold');
-    doc.text("Cliente:", col1X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.cliente || '', col1X + 20, yPos);
-
-    // Columna derecha
-    doc.setFont(undefined, 'bold');
-    doc.text("Falla:", col2X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.falla || '', col2X + 15, yPos);
-
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.text("Teléfono:", col1X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.telefono || '', col1X + 20, yPos);
-
-    doc.setFont(undefined, 'bold');
-    doc.text("Accesorios:", col2X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.accesorios || 'no', col2X + 25, yPos);
-
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.text("Equipo:", col1X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.equipo || '', col1X + 20, yPos);
-
-    doc.setFont(undefined, 'bold');
-    doc.text("Observaciones:", col2X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.observaciones || '', col2X + 30, yPos);
-
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.text("IMEI / Serie:", col1X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.imei || '', col1X + 20, yPos);
-
-    doc.setFont(undefined, 'bold');
-    doc.text("Estado:", col2X, yPos);
-    doc.setFont(undefined, 'normal');
-    doc.text(orden.estado || '', col2X + 15, yPos);
-
-    yPos += 12;
-    // Línea
-    doc.setLineWidth(0.3);
-    doc.line(10, yPos, pageWidth - 10, yPos);
-
-    // Términos y condiciones
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text("TÉRMINOS Y CONDICIONES", 10, yPos);
-
-    yPos += 6;
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    const terms = "1) Para retirar el equipo es OBLIGATORIA la presentación de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 días podrán ser descartados. 3) El cliente autoriza diagnóstico y reparación. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.";
-    
-    const splitTerms = doc.splitTextToSize(terms, pageWidth - 20);
-    doc.text(splitTerms, 10, yPos);
-
-    // Espacios para firmas
-    yPos = startY + 105;
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(0, 0, 0);
-    doc.line(15, yPos, 50, yPos);
-    doc.line(pageWidth - 55, yPos, pageWidth - 20, yPos);
-
-    // Agregar firma digital (solo en primera copia)
-    if (startY === 0) {
-    doc.addImage(firma, 'PNG', pageWidth - 55, yPos + 40, 30, 20);
-  }
-
-    yPos += 5;
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    doc.text("Firma Cliente", 20, yPos);
-    doc.text("Firma Técnico", pageWidth - 50, yPos);
-
-    // Footer oscuro
-    yPos = startY + 125;
-    doc.setFillColor(20, 23, 21);
-    doc.rect(0, yPos, pageWidth, 15, 'F');
-
-    doc.setFontSize(10);
-    doc.setTextColor(255, 122, 26);
-    doc.setFont(undefined, 'bold');
-    doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", pageWidth / 2, yPos + 8, { align: 'center' });
+  const guardarMovimientoCaja = async (movimiento) => {
+    const { error } = await supabase.from("caja").insert([{ ...movimiento, fecha: new Date().toISOString() }]);
+    if (!error) cargarCaja();
   };
 
-  // Generar primera copia
-  generarCopia(0);
+  const generarPDF = (orden) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Generar línea de corte
-  doc.setLineWidth(0.3);
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineDash([5, 5]); // Línea punteada
-  doc.line(10, 140, pageWidth - 10, 140);
-  doc.setLineDash([]); // Volver a línea normal
+    const generarCopia = (startY) => {
+      doc.setFillColor(20, 23, 21);
+      doc.rect(0, startY, pageWidth, 25, 'F');
+      doc.addImage(logo, 'PNG', 10, startY + 8, 12, 12);
+      doc.setFontSize(20);
+      doc.setTextColor(255, 255, 255);
+      doc.text("FIX", 25, startY + 15);
+      doc.setTextColor(255, 122, 26);
+      doc.text("LAB", 35, startY + 15);
+      doc.setTextColor(255, 122, 26);
+      doc.setFontSize(10);
+      doc.text("Reparación de celulares y PC", 25, startY + 20);
+      doc.setDrawColor(255, 122, 26);
+      doc.setLineWidth(0.5);
+      doc.line(10, startY + 28, pageWidth - 10, startY + 28);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`ORDEN # ${orden.id}`, 10, startY + 35);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      const fecha = new Date(orden.fecha).toLocaleString('es-AR');
+      doc.text(`Fecha: ${fecha}`, pageWidth - 60, startY + 35);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(150, 150, 150);
+      doc.line(10, startY + 38, pageWidth - 10, startY + 38);
+      let yPos = startY + 45;
+      const col1X = 10;
+      const col2X = pageWidth / 2;
+      doc.setFont(undefined, 'bold');
+      doc.text("Cliente:", col1X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.cliente || '', col1X + 20, yPos);
+      doc.setFont(undefined, 'bold');
+      doc.text("Falla:", col2X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.falla || '', col2X + 15, yPos);
+      yPos += 8;
+      doc.setFont(undefined, 'bold');
+      doc.text("Teléfono:", col1X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.telefono || '', col1X + 20, yPos);
+      doc.setFont(undefined, 'bold');
+      doc.text("Accesorios:", col2X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.accesorios || 'no', col2X + 25, yPos);
+      yPos += 8;
+      doc.setFont(undefined, 'bold');
+      doc.text("Equipo:", col1X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.equipo || '', col1X + 20, yPos);
+      doc.setFont(undefined, 'bold');
+      doc.text("Observaciones:", col2X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.observaciones || '', col2X + 30, yPos);
+      yPos += 8;
+      doc.setFont(undefined, 'bold');
+      doc.text("IMEI / Serie:", col1X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.imei || '', col1X + 20, yPos);
+      doc.setFont(undefined, 'bold');
+      doc.text("Estado:", col2X, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(orden.estado || '', col2X + 15, yPos);
+      yPos += 12;
+      doc.setLineWidth(0.3);
+      doc.line(10, yPos, pageWidth - 10, yPos);
+      yPos += 8;
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(9);
+      doc.text("TÉRMINOS Y CONDICIONES", 10, yPos);
+      yPos += 6;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+      const terms = "1) Para retirar el equipo es OBLIGATORIA la presentación de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 días podrán ser descartados. 3) El cliente autoriza diagnóstico y reparación. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.";
+      const splitTerms = doc.splitTextToSize(terms, pageWidth - 20);
+      doc.text(splitTerms, 10, yPos);
+      yPos = startY + 105;
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(15, yPos, 50, yPos);
+      doc.line(pageWidth - 55, yPos, pageWidth - 20, yPos);
+      if (startY === 0) {
+        doc.addImage(firma, 'PNG', pageWidth - 55, yPos + 40, 30, 20);
+      }
+      yPos += 5;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text("Firma Cliente", 20, yPos);
+      doc.text("Firma Técnico", pageWidth - 50, yPos);
+      yPos = startY + 125;
+      doc.setFillColor(20, 23, 21);
+      doc.rect(0, yPos, pageWidth, 15, 'F');
+      doc.setFontSize(10);
+      doc.setTextColor(255, 122, 26);
+      doc.setFont(undefined, 'bold');
+      doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", pageWidth / 2, yPos + 8, { align: 'center' });
+    };
 
-  // Generar segunda copia
-  generarCopia(145);
-
-  doc.save(`orden-${orden.id}-${orden.cliente}.pdf`);
-};
-
-  const generarLinkWhatsApp = (orden) => {
-    const mensaje = encodeURIComponent(`Hola ${orden.cliente}, adjunto tu comprobante técnico de la orden #${orden.id}. Equipo: ${orden.equipo} - Estado: ${orden.estado}`);
-    const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
-    window.open(link, '_blank');
+    generarCopia(0);
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineDash([5, 5]);
+    doc.line(10, 140, pageWidth - 10, 140);
+    doc.setLineDash([]);
+    generarCopia(145);
+    doc.save(`orden-${orden.id}-${orden.cliente}.pdf`);
   };
 
   if (!session) {
@@ -303,20 +259,20 @@ export default function App() {
               actualizarOrden={actualizarOrden} 
               eliminarOrden={eliminarOrden} 
               generarPDF={generarPDF}
-              generarLinkWhatsApp={generarLinkWhatsApp}
             />
           )}
-          {tab === "caja" && <Caja caja={caja} setCaja={setCaja} ordenes={ordenes} />}
-          {tab === "stock" && <Stock productos={productos} setProductos={setProductos} />}
+          {tab === "caja" && <Caja caja={caja} guardarMovimientoCaja={guardarMovimientoCaja} />}
+          {tab === "stock" && <Stock productos={productos} />}
         </div>
       </div>
     </div>
   );
 }
 
-function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden, generarPDF, generarLinkWhatsApp }) {
+function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden, generarPDF }) {
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
 
   const handleSave = () => {
     if (editingId) {
@@ -324,7 +280,7 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
       setEditingId(null);
       setForm({});
     } else {
-      guardarOrden({ ...form, fecha: new Date().toISOString() });
+      guardarOrden(form);
       setForm({});
     }
   };
@@ -339,153 +295,125 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
     setForm({});
   };
 
- return (
-  <div>
-    <h2>Servicio Técnico</h2>
-    <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
-      <input 
-        placeholder="Cliente" 
-        value={form.cliente || ""} 
-        onChange={(e) => setForm({ ...form, cliente: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="Teléfono" 
-        value={form.telefono || ""} 
-        onChange={(e) => setForm({ ...form, telefono: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="Equipo" 
-        value={form.equipo || ""} 
-        onChange={(e) => setForm({ ...form, equipo: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="Falla" 
-        value={form.falla || ""} 
-        onChange={(e) => setForm({ ...form, falla: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="IMEI/Serie" 
-        value={form.imei || ""} 
-        onChange={(e) => setForm({ ...form, imei: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="Accesorios" 
-        value={form.accesorios || ""} 
-        onChange={(e) => setForm({ ...form, accesorios: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <input 
-        placeholder="Observaciones" 
-        value={form.observaciones || ""} 
-        onChange={(e) => setForm({ ...form, observaciones: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <select 
-        value={form.estado || "Ingresado"} 
-        onChange={(e) => setForm({ ...form, estado: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
-        <option>Ingresado</option>
-        <option>Diagnóstico</option>
-        <option>En reparación</option>
-        <option>Esperando repuesto</option>
-        <option>Listo</option>
-        <option>Entregado</option>
-      </select>
-      <input 
-        placeholder="Importe" 
-        value={form.importe || ""} 
-        onChange={(e) => setForm({ ...form, importe: e.target.value })} 
-        style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} 
-      />
-      <div style={{ display: "flex", gap: "8px" }}>
-        <button 
-          onClick={handleSave} 
-          style={{ flex: 1, background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
-          {editingId ? "Actualizar" : "Guardar"}
-        </button>
-        {editingId && (
-          <button 
-            onClick={handleCancel} 
-            style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>
-            Cancelar
-          </button>
-        )}
+  const ordenesFiltradas = ordenes.filter((o) =>
+    o.cliente.toLowerCase().includes(busqueda.toLowerCase()) ||
+    o.equipo.toLowerCase().includes(busqueda.toLowerCase()) ||
+    o.id.toString().includes(busqueda)
+  );
+
+  return (
+    <div>
+      <h2>Servicio Técnico</h2>
+      <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
+        <input placeholder="Cliente" value={form.cliente || ""} onChange={(e) => setForm({ ...form, cliente: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Teléfono" value={form.telefono || ""} onChange={(e) => setForm({ ...form, telefono: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Equipo" value={form.equipo || ""} onChange={(e) => setForm({ ...form, equipo: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Falla" value={form.falla || ""} onChange={(e) => setForm({ ...form, falla: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="IMEI/Serie" value={form.imei || ""} onChange={(e) => setForm({ ...form, imei: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Accesorios" value={form.accesorios || ""} onChange={(e) => setForm({ ...form, accesorios: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <select value={form.estado || "Ingresado"} onChange={(e) => setForm({ ...form, estado: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+          <option>Ingresado</option>
+          <option>Diagnóstico</option>
+          <option>En reparación</option>
+          <option>Esperando repuesto</option>
+          <option>Listo</option>
+          <option>Entregado</option>
+        </select>
+        <input placeholder="Importe" value={form.importe || ""} onChange={(e) => setForm({ ...form, importe: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={handleSave} style={{ flex: 1, background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>{editingId ? "Actualizar" : "Guardar"}</button>
+          {editingId && <button onClick={handleCancel} style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>}
+        </div>
+      </div>
+      <input placeholder="🔍 Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+      <div>
+        {ordenesFiltradas.map((orden) => (
+          <div key={orden.id} style={{ background: "#141715", padding: "12px", marginBottom: "8px", borderRadius: "6px" }}>
+            <div style={{ marginBottom: "8px" }}><strong>{orden.cliente}</strong> - {orden.equipo}</div>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <select value={orden.estado || "Ingresado"} onChange={(e) => { const nuevoEstado = e.target.value; actualizarOrden(orden.id, { estado: nuevoEstado }); const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo cambió a ${nuevoEstado}. - Fix Lab`); const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`; window.open(link, '_blank'); }} style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
+                <option>Ingresado</option>
+                <option>Diagnóstico</option>
+                <option>En reparación</option>
+                <option>Esperando repuesto</option>
+                <option>Listo</option>
+                <option>Entregado</option>
+              </select>
+              <button onClick={() => generarPDF(orden)} style={{ background: "#ff7a1a", color: "#000", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>PDF</button>
+              <button onClick={() => handleEdit(orden)} style={{ background: "#3b82f6", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Editar</button>
+              <button onClick={() => eliminarOrden(orden.id)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
-    <div>
-      {ordenes.map((orden) => (
-        <div key={orden.id} style={{ background: "#141715", padding: "12px", marginBottom: "8px", borderRadius: "6px" }}>
-          <div style={{ marginBottom: "8px" }}>
-            <strong>{orden.cliente}</strong> - {orden.equipo}
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-            <select 
-              value={orden.estado || "Ingresado"}
-              onChange={(e) => {
-                const nuevoEstado = e.target.value;
-                actualizarOrden(orden.id, { estado: nuevoEstado });
-                
-                // Abrir WhatsApp automáticamente
-                const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Te informamos que tu equipo ${orden.equipo} cambió su estado a ${nuevoEstado}. Ante cualquier consulta escribinos. - Fix Lab`);
-                const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
-                window.open(link, '_blank');
-              }}
-              style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
-              <option>Ingresado</option>
-              <option>Diagnóstico</option>
-              <option>En reparación</option>
-              <option>Esperando repuesto</option>
-              <option>Listo</option>
-              <option>Entregado</option>
-            </select>
-            <button 
-              onClick={() => generarPDF(orden)} 
-              style={{ background: "#ff7a1a", color: "#000", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-              PDF
-            </button>
-            <button 
-              onClick={() => eliminarOrden(orden.id)} 
-              style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>
-              Eliminar
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+  );
 }
 
-function Caja({ caja, setCaja, ordenes }) {
+function Caja({ caja, guardarMovimientoCaja }) {
+  const [form, setForm] = useState({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "" });
+  const [filtro, setFiltro] = useState("todos");
+
   const ingresos = caja.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
   const egresos = caja.filter((m) => m.tipo === "egreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
+
+  const getFechaInicio = () => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (filtro === "hoy") return hoy;
+    if (filtro === "semana") { const hace7 = new Date(hoy); hace7.setDate(hace7.getDate() - 7); return hace7; }
+    if (filtro === "mes") { const hace30 = new Date(hoy); hace30.setDate(hace30.getDate() - 30); return hace30; }
+    return new Date(0);
+  };
+
+  const cajaFiltrada = caja.filter((m) => new Date(m.fecha) >= getFechaInicio());
+
+  const handleSave = () => {
+    if (form.monto && form.descripcion) {
+      guardarMovimientoCaja(form);
+      setForm({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "" });
+    }
+  };
 
   return (
     <div>
       <h2>Caja</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "20px" }}>
-        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, color: "#6ee7a0" }}>Ingresos</p>
-          <h3 style={{ margin: "8px 0 0 0" }}>${ingresos.toFixed(2)}</h3>
-        </div>
-        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, color: "#e53e3e" }}>Egresos</p>
-          <h3 style={{ margin: "8px 0 0 0" }}>-${egresos.toFixed(2)}</h3>
-        </div>
-        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, color: "#ff7a1a" }}>Balance</p>
-          <h3 style={{ margin: "8px 0 0 0" }}>${(ingresos - egresos).toFixed(2)}</h3>
-        </div>
+        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}><p style={{ margin: 0, color: "#6ee7a0" }}>Ingresos</p><h3 style={{ margin: "8px 0 0 0" }}>${ingresos.toFixed(2)}</h3></div>
+        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}><p style={{ margin: 0, color: "#e53e3e" }}>Egresos</p><h3 style={{ margin: "8px 0 0 0" }}>-${egresos.toFixed(2)}</h3></div>
+        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}><p style={{ margin: 0, color: "#ff7a1a" }}>Balance</p><h3 style={{ margin: "8px 0 0 0" }}>${(ingresos - egresos).toFixed(2)}</h3></div>
       </div>
+
+      <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
+        <h3>Nuevo Movimiento</h3>
+        <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+          <option value="ingreso">Ingreso</option>
+          <option value="egreso">Egreso</option>
+        </select>
+        {form.tipo === "ingreso" && (
+          <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+            <option value="reparacion">Reparación</option>
+            <option value="venta">Venta de Accesorios</option>
+            <option value="otro">Otro</option>
+          </select>
+        )}
+        <input type="number" placeholder="Monto" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Descripción" value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <button onClick={handleSave} style={{ width: "100%", background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Guardar</button>
+      </div>
+
+      <div style={{ marginBottom: "12px", display: "flex", gap: "8px" }}>
+        <button onClick={() => setFiltro("todos")} style={{ padding: "8px 12px", background: filtro === "todos" ? "#ff7a1a" : "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee", cursor: "pointer" }}>Todos</button>
+        <button onClick={() => setFiltro("hoy")} style={{ padding: "8px 12px", background: filtro === "hoy" ? "#ff7a1a" : "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee", cursor: "pointer" }}>Hoy</button>
+        <button onClick={() => setFiltro("semana")} style={{ padding: "8px 12px", background: filtro === "semana" ? "#ff7a1a" : "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee", cursor: "pointer" }}>Semana</button>
+        <button onClick={() => setFiltro("mes")} style={{ padding: "8px 12px", background: filtro === "mes" ? "#ff7a1a" : "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee", cursor: "pointer" }}>Mes</button>
+      </div>
+
       <div style={{ background: "#141715", padding: "16px", borderRadius: "8px" }}>
-        {caja.map((m) => (
+        {cajaFiltrada.map((m) => (
           <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #2a2e2b" }}>
-            <span>{m.descripcion}</span>
+            <span>{m.descripcion} ({new Date(m.fecha).toLocaleDateString('es-AR')})</span>
             <span style={{ color: m.tipo === "ingreso" ? "#6ee7a0" : "#e53e3e" }}>${m.monto}</span>
           </div>
         ))}
@@ -494,7 +422,7 @@ function Caja({ caja, setCaja, ordenes }) {
   );
 }
 
-function Stock({ productos, setProductos }) {
+function Stock({ productos }) {
   return (
     <div>
       <h2>Stock</h2>
