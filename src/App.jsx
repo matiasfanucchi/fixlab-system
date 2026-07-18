@@ -296,10 +296,10 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   };
 
   const ordenesFiltradas = ordenes.filter((o) =>
-    o.cliente.toLowerCase().includes(busqueda.toLowerCase()) ||
-    o.equipo.toLowerCase().includes(busqueda.toLowerCase()) ||
-    o.id.toString().includes(busqueda)
-  );
+  (o.cliente || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+  (o.equipo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+  o.id.toString().includes(busqueda)
+);
 
   return (
     <div>
