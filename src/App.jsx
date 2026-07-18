@@ -318,12 +318,6 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   <option value="numero">Número</option>
   <option value="alfanumerico">Alfanumérico</option>
 </select>
-<select value={form.tipo_contrasena || ""} onChange={(e) => setForm({ ...form, tipo_contrasena: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
-  <option value="">-- Tipo de Contraseña --</option>
-  <option value="patron">Patrón</option>
-  <option value="numero">Número</option>
-  <option value="alfanumerico">Alfanumérico</option>
-</select>
 <input placeholder="Contraseña" value={form.contrasena || ""} onChange={(e) => setForm({ ...form, contrasena: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
 <input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
