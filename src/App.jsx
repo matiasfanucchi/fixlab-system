@@ -273,6 +273,7 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
 
   const handleSave = () => {
     if (editingId) {
@@ -296,10 +297,10 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   };
 
   const ordenesFiltradas = ordenes.filter((o) =>
-  (o.cliente || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-  (o.equipo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-  o.id.toString().includes(busqueda)
-);
+    (o.cliente || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (o.equipo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    o.id.toString().includes(busqueda)
+  );
 
   return (
     <div>
@@ -330,7 +331,30 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
       <div>
         {ordenesFiltradas.map((orden) => (
           <div key={orden.id} style={{ background: "#141715", padding: "12px", marginBottom: "8px", borderRadius: "6px" }}>
-            <div style={{ marginBottom: "8px" }}><strong>{orden.cliente}</strong> - {orden.equipo}</div>
+            <div style={{ marginBottom: "8px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }} onClick={() => setExpandedId(expandedId === orden.id ? null : orden.id)}>
+              <div>
+                <strong>Orden #{orden.id}</strong> - {orden.cliente} - {orden.equipo}
+                <div style={{ fontSize: "12px", color: "#9aa39c", marginTop: "4px" }}>
+                  📅 {new Date(orden.fecha).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <span style={{ color: "#ff7a1a" }}>{expandedId === orden.id ? '▼' : '▶'}</span>
+            </div>
+
+            {expandedId === orden.id && (
+              <div style={{ background: "#1a1f1c", padding: "12px", borderRadius: "4px", marginBottom: "8px", fontSize: "14px" }}>
+                <p><strong>Cliente:</strong> {orden.cliente}</p>
+                <p><strong>Teléfono:</strong> {orden.telefono}</p>
+                <p><strong>Equipo:</strong> {orden.equipo}</p>
+                <p><strong>Falla:</strong> {orden.falla}</p>
+                <p><strong>IMEI/Serie:</strong> {orden.imei}</p>
+                <p><strong>Accesorios:</strong> {orden.accesorios || 'no'}</p>
+                <p><strong>Observaciones:</strong> {orden.observaciones}</p>
+                <p><strong>Estado:</strong> {orden.estado}</p>
+                <p><strong>Importe:</strong> ${orden.importe}</p>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               <select value={orden.estado || "Ingresado"} onChange={(e) => { const nuevoEstado = e.target.value; actualizarOrden(orden.id, { estado: nuevoEstado }); const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo cambió a ${nuevoEstado}. - Fix Lab`); const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`; window.open(link, '_blank'); }} style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
                 <option>Ingresado</option>
