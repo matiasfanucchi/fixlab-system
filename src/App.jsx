@@ -312,6 +312,13 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
         <input placeholder="Falla" value={form.falla || ""} onChange={(e) => setForm({ ...form, falla: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="IMEI/Serie" value={form.imei || ""} onChange={(e) => setForm({ ...form, imei: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="Accesorios" value={form.accesorios || ""} onChange={(e) => setForm({ ...form, accesorios: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <select value={form.tipo_contrasena || ""} onChange={(e) => setForm({ ...form, tipo_contrasena: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+  <option value="">-- Tipo de Contraseña --</option>
+  <option value="patron">Patrón</option>
+  <option value="numero">Número</option>
+  <option value="alfanumerico">Alfanumérico</option>
+</select>
+<input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <select value={form.estado || "Ingresado"} onChange={(e) => setForm({ ...form, estado: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
           <option>Ingresado</option>
@@ -349,6 +356,7 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
                 <p><strong>Falla:</strong> {orden.falla}</p>
                 <p><strong>IMEI/Serie:</strong> {orden.imei}</p>
                 <p><strong>Accesorios:</strong> {orden.accesorios || 'no'}</p>
+                <p><strong>Tipo de Contraseña:</strong> {orden.tipo_contrasena || 'No especificado'}</p>git add .
                 <p><strong>Observaciones:</strong> {orden.observaciones}</p>
                 <p><strong>Estado:</strong> {orden.estado}</p>
                 <p><strong>Importe:</strong> ${orden.importe}</p>
