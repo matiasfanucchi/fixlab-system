@@ -68,7 +68,12 @@ export default function App() {
     return;
   }
   
-  const { data, error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
+  // No enviar campos vacíos
+  const ordenLimpia = Object.fromEntries(
+    Object.entries(orden).filter(([_, v]) => v !== "" && v !== null)
+  );
+  
+  const { data, error } = await supabase.from("ordenes").insert([{ ...ordenLimpia, fecha: new Date().toISOString() }]);
   
   if (error) {
     console.log("Error al guardar:", error);
