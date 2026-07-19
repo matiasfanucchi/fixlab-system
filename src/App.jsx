@@ -63,14 +63,23 @@ export default function App() {
   };
 
   const guardarOrden = async (orden) => {
-    const { error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
-    if (!error) {
-      cargarOrdenes();
-      const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo ${orden.equipo} ha sido registrado en Fix Lab. Orden #${orden.id}. Ante cualquier consulta escribinos. - Fix Lab`);
-      const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
-      setTimeout(() => window.open(link, '_blank'), 500);
-    }
-  };
+  if (!orden.cliente || !orden.telefono || !orden.equipo) {
+    alert("Completa: Cliente, Teléfono y Equipo");
+    return;
+  }
+  
+  const { data, error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
+  
+  if (error) {
+    console.log("Error al guardar:", error);
+    alert("Error: " + error.message);
+  } else {
+    cargarOrdenes();
+    const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo ${orden.equipo} ha sido registrado en Fix Lab. Ante cualquier consulta escribinos. - Fix Lab`);
+    const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
+    setTimeout(() => window.open(link, '_blank'), 500);
+  }
+};
 
   const actualizarOrden = async (id, updates) => {
     await supabase.from("ordenes").update(updates).eq("id", id);
