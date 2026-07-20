@@ -470,16 +470,80 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos }) {
+function Stock({ productos, setProductos }) {
+  const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  
+  const categorias = [
+    "Fundas Samsung", "Fundas Xiaomi", "Fundas iPhone", "Fundas Motorola",
+    "Vidrios Templados Samsung", "Vidrios Templados Xiaomi", "Vidrios Templados iPhone", "Vidrios Templados Motorola",
+    "Cargadores", "Cables USB", "Cargadores 12V", "Holders",
+    "Cargadores Inalámbricos", "Cables", "Manos Libres", "Auriculares Bluetooth",
+    "Vinchas Bluetooth", "Lámparas", "Parlantes", "Relojes",
+    "Smartwatch", "Joystick", "Teclados", "Mouse",
+    "Combos Teclado Mouse", "Iluminación", "Despertadores", "Micrófonos",
+    "Pendrives", "Memorias", "Accesorios Varios"
+  ];
+
+  const handleAgregar = () => {
+    if (form.nombre && form.categoria && form.cantidad > 0) {
+      const nuevoProducto = { ...form, id: Date.now() };
+      setProductos([...productos, nuevoProducto]);
+      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+    }
+  };
+
+  const handleEliminar = (id) => {
+    setProductos(productos.filter((p) => p.id !== id));
+  };
+
+  const handleDescontar = (id, cantidad) => {
+    const actualizado = productos.map((p) => {
+      if (p.id === id) {
+        const nuevaCantidad = Math.max(0, p.cantidad - cantidad);
+        return { ...p, cantidad: nuevaCantidad };
+      }
+      return p;
+    });
+    setProductos(actualizado);
+  };
+
   return (
     <div>
       <h2>Stock</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
+      <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
+        <h3>Agregar Producto</h3>
+        <input placeholder="Nombre del producto" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        
+        <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+          <option value="">-- Selecciona categoría --</option>
+          {categorias.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+
+        <input type="number" placeholder="Cantidad" value={form.cantidad} onChange={(e) => setForm({ ...form, cantidad: parseInt(e.target.value) || 0 })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        
+        <input type="number" placeholder="Precio de venta" value={form.precio_venta} onChange={(e) => setForm({ ...form, precio_venta: parseFloat(e.target.value) || 0 })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        
+        <button onClick={handleAgregar} style={{ width: "100%", background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Agregar Producto</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "12px" }}>
         {productos.map((p) => (
-          <div key={p.id} style={{ background: "#141715", padding: "12px", borderRadius: "8px" }}>
+          <div key={p.id} style={{ background: "#141715", padding: "12px", borderRadius: "8px", border: p.cantidad <= 1 ? "2px solid #e53e3e" : "1px solid #2a2e2b" }}>
             <h4 style={{ margin: "0 0 8px 0" }}>{p.nombre}</h4>
-            <p style={{ margin: "0", fontSize: "12px", color: "#9aa39c" }}>Stock: {p.cantidad}</p>
-            <p style={{ margin: "0", fontSize: "12px", color: "#ff7a1a" }}>${p.precio_venta}</p>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#9aa39c" }}>{p.categoria}</p>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: p.cantidad <= 1 ? "#e53e3e" : "#6ee7a0" }}>
+              📦 Stock: {p.cantidad} {p.cantidad <= 1 && "⚠️ BAJO"}
+            </p>
+            <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#ff7a1a" }}>💰 ${p.precio_venta}</p>
+            
+            <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+              <button onClick={() => handleDescontar(p.id, 1)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-1</button>
+              <button onClick={() => handleDescontar(p.id, 5)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-5</button>
+            </div>
+            
+            <button onClick={() => handleEliminar(p.id)} style={{ width: "100%", background: "#e53e3e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
           </div>
         ))}
       </div>
