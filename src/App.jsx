@@ -484,27 +484,33 @@ function Stock({ productos, setProductos }) {
     "Pendrives", "Memorias", "Accesorios Varios"
   ];
 
-  const handleAgregar = () => {
+  const handleAgregar = async () => {
     if (form.nombre && form.categoria && form.cantidad > 0) {
-      const nuevoProducto = { ...form, id: Date.now() };
-      setProductos([...productos, nuevoProducto]);
-      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+      const { data, error } = await supabase.from("productos").insert([form]);
+      if (!error) {
+        const { data: productos } = await supabase.from("productos").select("*");
+        setProductos(productos || []);
+        setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+      } else {
+        alert("Error: " + error.message);
+      }
     }
   };
 
-  const handleEliminar = (id) => {
-    setProductos(productos.filter((p) => p.id !== id));
+  const handleEliminar = async (id) => {
+    await supabase.from("productos").delete().eq("id", id);
+    const { data: productos } = await supabase.from("productos").select("*");
+    setProductos(productos || []);
   };
 
-  const handleDescontar = (id, cantidad) => {
-    const actualizado = productos.map((p) => {
-      if (p.id === id) {
-        const nuevaCantidad = Math.max(0, p.cantidad - cantidad);
-        return { ...p, cantidad: nuevaCantidad };
-      }
-      return p;
-    });
-    setProductos(actualizado);
+  const handleDescontar = async (id, cantidad) => {
+    const producto = productos.find((p) => p.id === id);
+    if (producto) {
+      const nuevaCantidad = Math.max(0, producto.cantidad - cantidad);
+      await supabase.from("productos").update({ cantidad: nuevaCantidad }).eq("id", id);
+      const { data: productos } = await supabase.from("productos").select("*");
+      setProductos(productos || []);
+    }
   };
 
   return (
