@@ -283,7 +283,7 @@ const guardarProducto = async (producto) => {
             />
           )}
           {tab === "caja" && <Caja caja={caja} guardarMovimientoCaja={guardarMovimientoCaja} />}
-          {tab === "stock" && <Stock productos={productos} />}
+          {tab === "stock" && <Stock productos={productos} cargarProductos={cargarProductos} />}
         </div>
       </div>
     </div>
@@ -493,20 +493,17 @@ function Stock({ productos }) {
   ];
 
   const handleAgregar = async () => {
-    if (form.nombre && form.categoria && form.cantidad > 0) {
-      if (editingId) {
-        // Actualizar
-        await supabase.from("productos").update(form).eq("id", editingId);
-        const { data: prods } = await supabase.from("productos").select("*");
-        // Actualizar productos aquí (necesitas cargarProductos)
-        setEditingId(null);
-      } else {
-        // Crear nuevo
-        await supabase.from("productos").insert([form]);
-      }
-      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  if (form.nombre && form.categoria && form.cantidad > 0) {
+    if (editingId) {
+      await supabase.from("productos").update(form).eq("id", editingId);
+    } else {
+      await supabase.from("productos").insert([form]);
     }
-  };
+    cargarProductos(); // ← AGREGÁ ESTO
+    setEditingId(null);
+    setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  }
+};
 
   const handleEditar = (p) => {
     setEditingId(p.id);
@@ -519,8 +516,9 @@ function Stock({ productos }) {
   };
 
   const handleEliminar = async (id) => {
-    await supabase.from("productos").delete().eq("id", id);
-  };
+  await supabase.from("productos").delete().eq("id", id);
+  cargarProductos(); // ← AGREGÁ ESTO
+};
 
   const handleDescontar = async (id, cantidad) => {
     const producto = productos.find((p) => p.id === id);
