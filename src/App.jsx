@@ -283,10 +283,12 @@ export default function App() {
 }
 
 function Dashboard({ ordenes, caja, productos, setTab }) {
+  const [expandStockBajo, setExpandStockBajo] = useState(false);
+  
   const ordenesPendientes = ordenes.filter((o) => o.estado !== "Entregado").length;
   const ingresos = caja.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
   const egresos = caja.filter((m) => m.tipo === "egreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
-  const stockBajo = productos.filter((p) => p.cantidad <= 1).length;
+  const productosStockBajo = productos.filter((p) => p.cantidad <= 1);
 
   return (
     <div style={{ color: "#eef0ee" }}>
@@ -302,16 +304,32 @@ function Dashboard({ ordenes, caja, productos, setTab }) {
 
         <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #6ee7a0", textAlign: "center" }}>
           <h3 style={{ margin: 0, color: "#6ee7a0", fontSize: "14px" }}>💰 BALANCE CAJA</h3>
-          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: (ingresos - egresos) >= 0 ? "#6ee7a0" : "#e53e3e" }}>
+          <h1 style={{ margin: "12px 0 0 0", fontSize: "32px", color: (ingresos - egresos) >= 0 ? "#6ee7a0" : "#e53e3e" }}>
             ${(ingresos - egresos).toFixed(2)}
           </h1>
         </div>
 
-        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #e53e3e", textAlign: "center" }}>
+        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #e53e3e", textAlign: "center", cursor: "pointer" }} onClick={() => setExpandStockBajo(!expandStockBajo)}>
           <h3 style={{ margin: 0, color: "#e53e3e", fontSize: "14px" }}>⚠️ STOCK BAJO</h3>
-          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#e53e3e" }}>{stockBajo}</h1>
+          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#e53e3e" }}>{productosStockBajo.length}</h1>
         </div>
       </div>
+
+      {expandStockBajo && (
+        <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "30px", border: "2px solid #e53e3e" }}>
+          <h3 style={{ color: "#e53e3e", marginTop: 0 }}>Productos con Stock Bajo:</h3>
+          {productosStockBajo.length === 0 ? (
+            <p style={{ color: "#6ee7a0" }}>✅ Todos los productos tienen stock</p>
+          ) : (
+            productosStockBajo.map((p) => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #2a2e2b" }}>
+                <span>{p.nombre} ({p.categoria})</span>
+                <span style={{ color: "#e53e3e", fontWeight: "bold" }}>Stock: {p.cantidad}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
         <button 
