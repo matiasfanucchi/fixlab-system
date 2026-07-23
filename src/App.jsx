@@ -477,8 +477,9 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos, guardarProducto, actualizarProducto }) {
+function Stock({ productos }) {
   const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  const [editingId, setEditingId] = useState(null);
   
   const categorias = [
     "Fundas Samsung", "Fundas Xiaomi", "Fundas iPhone", "Fundas Motorola",
@@ -491,17 +492,34 @@ function Stock({ productos, guardarProducto, actualizarProducto }) {
     "Pendrives", "Memorias", "Accesorios Varios"
   ];
 
-  const handleAgregar = () => {
+  const handleAgregar = async () => {
     if (form.nombre && form.categoria && form.cantidad > 0) {
-      guardarProducto(form);
+      if (editingId) {
+        // Actualizar
+        await supabase.from("productos").update(form).eq("id", editingId);
+        const { data: prods } = await supabase.from("productos").select("*");
+        // Actualizar productos aquí (necesitas cargarProductos)
+        setEditingId(null);
+      } else {
+        // Crear nuevo
+        await supabase.from("productos").insert([form]);
+      }
       setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
     }
   };
 
+  const handleEditar = (p) => {
+    setEditingId(p.id);
+    setForm(p);
+  };
+
+  const handleCancelar = () => {
+    setEditingId(null);
+    setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  };
+
   const handleEliminar = async (id) => {
     await supabase.from("productos").delete().eq("id", id);
-    const { data: prods } = await supabase.from("productos").select("*");
-    // Actualizar state aquí
   };
 
   const handleDescontar = async (id, cantidad) => {
@@ -516,7 +534,7 @@ function Stock({ productos, guardarProducto, actualizarProducto }) {
     <div>
       <h2>Stock</h2>
       <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
-        <h3>Agregar Producto</h3>
+        <h3>{editingId ? "Editar Producto" : "Agregar Producto"}</h3>
         <input placeholder="Nombre del producto" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         
         <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
@@ -530,7 +548,10 @@ function Stock({ productos, guardarProducto, actualizarProducto }) {
         
         <input type="number" placeholder="Precio de venta" value={form.precio_venta} onChange={(e) => setForm({ ...form, precio_venta: parseFloat(e.target.value) || 0 })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         
-        <button onClick={handleAgregar} style={{ width: "100%", background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Agregar Producto</button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={handleAgregar} style={{ flex: 1, background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>{editingId ? "Actualizar" : "Agregar"}</button>
+          {editingId && <button onClick={handleCancelar} style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>}
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "12px" }}>
@@ -547,8 +568,11 @@ function Stock({ productos, guardarProducto, actualizarProducto }) {
               <button onClick={() => handleDescontar(p.id, 1)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-1</button>
               <button onClick={() => handleDescontar(p.id, 5)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-5</button>
             </div>
-            
-            <button onClick={() => handleEliminar(p.id)} style={{ width: "100%", background: "#e53e3e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
+
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button onClick={() => handleEditar(p)} style={{ flex: 1, background: "#ff7a1a", color: "#000", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Editar</button>
+              <button onClick={() => handleEliminar(p.id)} style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
+            </div>
           </div>
         ))}
       </div>
