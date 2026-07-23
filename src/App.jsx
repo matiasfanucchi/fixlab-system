@@ -13,7 +13,7 @@ const estados = ["Ingresado", "Diagnóstico", "En reparación", "Esperando repue
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [tab, setTab] = useState("servicio");
+  const [tab, setTab] = useState("dashboard");
   const [ordenes, setOrdenes] = useState([]);
   const [caja, setCaja] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -63,28 +63,23 @@ export default function App() {
   };
 
   const guardarOrden = async (orden) => {
-  if (!orden.cliente || !orden.telefono || !orden.equipo) {
-    alert("Completa: Cliente, Teléfono y Equipo");
-    return;
-  }
-  
-  // No enviar campos vacíos
-  const ordenLimpia = Object.fromEntries(
-    Object.entries(orden).filter(([_, v]) => v !== "" && v !== null)
-  );
-  
-  const { data, error } = await supabase.from("ordenes").insert([{ ...ordenLimpia, fecha: new Date().toISOString() }]);
-  
-  if (error) {
-    console.log("Error al guardar:", error);
-    alert("Error: " + error.message);
-  } else {
-    cargarOrdenes();
-    const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo ${orden.equipo} ha sido registrado en Fix Lab. Ante cualquier consulta escribinos. - Fix Lab`);
-    const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
-    setTimeout(() => window.open(link, '_blank'), 500);
-  }
-};
+    if (!orden.cliente || !orden.telefono || !orden.equipo) {
+      alert("Completa: Cliente, Teléfono y Equipo");
+      return;
+    }
+    
+    const { data, error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
+    
+    if (error) {
+      console.log("Error al guardar:", error);
+      alert("Error: " + error.message);
+    } else {
+      cargarOrdenes();
+      const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo ${orden.equipo} ha sido registrado en Fix Lab. Ante cualquier consulta escribinos. - Fix Lab`);
+      const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
+      setTimeout(() => window.open(link, '_blank'), 500);
+    }
+  };
 
   const actualizarOrden = async (id, updates) => {
     await supabase.from("ordenes").update(updates).eq("id", id);
@@ -95,14 +90,7 @@ export default function App() {
     await supabase.from("ordenes").delete().eq("id", id);
     cargarOrdenes();
   };
-const guardarProducto = async (producto) => {
-  const { error } = await supabase.from("productos").insert([producto]);
-  if (!error) {
-    cargarProductos();
-  } else {
-    alert("Error: " + error.message);
-  }
-};  
+
   const guardarMovimientoCaja = async (movimiento) => {
     const { error } = await supabase.from("caja").insert([{ ...movimiento, fecha: new Date().toISOString() }]);
     if (!error) cargarCaja();
@@ -260,7 +248,10 @@ const guardarProducto = async (producto) => {
       </div>
 
       <div style={{ display: "flex" }}>
-        <div style={{ background: "#141715", width: "200px", borderRight: "1px solid #2a2e2b", padding: "16px" }}>
+        <div style={{ background: "#141715", width: "200px", borderRight: "1px solid #2a2e2b", padding: "16px", maxHeight: "calc(100vh - 100px)", overflowY: "auto" }}>
+          <button onClick={() => setTab("dashboard")} style={{ width: "100%", padding: "12px", marginBottom: "8px", background: tab === "dashboard" ? "#ff7a1a" : "transparent", border: "1px solid #2a2e2b", borderRadius: "6px", color: "#eef0ee", cursor: "pointer" }}>
+            📊 Dashboard
+          </button>
           <button onClick={() => setTab("servicio")} style={{ width: "100%", padding: "12px", marginBottom: "8px", background: tab === "servicio" ? "#ff7a1a" : "transparent", border: "1px solid #2a2e2b", borderRadius: "6px", color: "#eef0ee", cursor: "pointer" }}>
             Servicio Técnico
           </button>
@@ -272,7 +263,8 @@ const guardarProducto = async (producto) => {
           </button>
         </div>
 
-        <div style={{ flex: 1, padding: "24px" }}>
+        <div style={{ flex: 1, padding: "24px", maxHeight: "calc(100vh - 100px)", overflowY: "auto" }}>
+          {tab === "dashboard" && <Dashboard ordenes={ordenes} caja={caja} productos={productos} setTab={setTab} />}
           {tab === "servicio" && (
             <ServicioTecnico 
               ordenes={ordenes} 
@@ -285,6 +277,99 @@ const guardarProducto = async (producto) => {
           {tab === "caja" && <Caja caja={caja} guardarMovimientoCaja={guardarMovimientoCaja} />}
           {tab === "stock" && <Stock productos={productos} cargarProductos={cargarProductos} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ ordenes, caja, productos, setTab }) {
+  const ordenesPendientes = ordenes.filter((o) => o.estado !== "Entregado").length;
+  const ingresos = caja.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
+  const egresos = caja.filter((m) => m.tipo === "egreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
+  const stockBajo = productos.filter((p) => p.cantidad <= 1).length;
+
+  return (
+    <div style={{ color: "#eef0ee" }}>
+      <h1 style={{ fontSize: "36px", marginBottom: "30px", textAlign: "center" }}>
+        📊 Dashboard
+      </h1>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px", marginBottom: "40px" }}>
+        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #ff7a1a", textAlign: "center" }}>
+          <h3 style={{ margin: 0, color: "#ff7a1a", fontSize: "14px" }}>📋 ÓRDENES PENDIENTES</h3>
+          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#6ee7a0" }}>{ordenesPendientes}</h1>
+        </div>
+
+        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #6ee7a0", textAlign: "center" }}>
+          <h3 style={{ margin: 0, color: "#6ee7a0", fontSize: "14px" }}>💰 BALANCE CAJA</h3>
+          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: (ingresos - egresos) >= 0 ? "#6ee7a0" : "#e53e3e" }}>
+            ${(ingresos - egresos).toFixed(2)}
+          </h1>
+        </div>
+
+        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #e53e3e", textAlign: "center" }}>
+          <h3 style={{ margin: 0, color: "#e53e3e", fontSize: "14px" }}>⚠️ STOCK BAJO</h3>
+          <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#e53e3e" }}>{stockBajo}</h1>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+        <button 
+          onClick={() => setTab("servicio")}
+          style={{ 
+            background: "linear-gradient(135deg, #ff7a1a 0%, #ff9c42 100%)", 
+            color: "#000", 
+            border: "none", 
+            padding: "20px", 
+            borderRadius: "8px", 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            cursor: "pointer",
+            transition: "transform 0.2s"
+          }}
+          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
+        >
+          📱 Servicio Técnico
+        </button>
+
+        <button 
+          onClick={() => setTab("caja")}
+          style={{ 
+            background: "linear-gradient(135deg, #6ee7a0 0%, #8ff4b8 100%)", 
+            color: "#000", 
+            border: "none", 
+            padding: "20px", 
+            borderRadius: "8px", 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            cursor: "pointer",
+            transition: "transform 0.2s"
+          }}
+          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
+        >
+          💵 Caja
+        </button>
+
+        <button 
+          onClick={() => setTab("stock")}
+          style={{ 
+            background: "linear-gradient(135deg, #3b82f6 0%, #5ba3ff 100%)", 
+            color: "#fff", 
+            border: "none", 
+            padding: "20px", 
+            borderRadius: "8px", 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            cursor: "pointer",
+            transition: "transform 0.2s"
+          }}
+          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
+        >
+          📦 Stock
+        </button>
       </div>
     </div>
   );
@@ -333,14 +418,14 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
         <input placeholder="Falla" value={form.falla || ""} onChange={(e) => setForm({ ...form, falla: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="IMEI/Serie" value={form.imei || ""} onChange={(e) => setForm({ ...form, imei: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="Accesorios" value={form.accesorios || ""} onChange={(e) => setForm({ ...form, accesorios: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+        <input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <select value={form.tipo_contrasena || ""} onChange={(e) => setForm({ ...form, tipo_contrasena: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
-  <option value="">-- Tipo de Contraseña --</option>
-  <option value="patron">Patrón</option>
-  <option value="numero">Número</option>
-  <option value="alfanumerico">Alfanumérico</option>
-</select>
-<input placeholder="Contraseña" value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
-<input placeholder="Observaciones" value={form.observaciones || ""} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+          <option value="">-- Tipo de Contraseña --</option>
+          <option value="patron">Patrón</option>
+          <option value="numero">Número</option>
+          <option value="alfanumerico">Alfanumérico</option>
+        </select>
+        <input placeholder="Contraseña" value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <select value={form.estado || "Ingresado"} onChange={(e) => setForm({ ...form, estado: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
           <option>Ingresado</option>
           <option>Diagnóstico</option>
@@ -377,10 +462,9 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
                 <p><strong>Falla:</strong> {orden.falla}</p>
                 <p><strong>IMEI/Serie:</strong> {orden.imei}</p>
                 <p><strong>Accesorios:</strong> {orden.accesorios || 'no'}</p>
-                <p><strong>Tipo de Contraseña:</strong> {orden.tipo_contrasena || 'No especificado'}</p>git add .
+                <p><strong>Observaciones:</strong> {orden.observaciones}</p>
                 <p><strong>Tipo de Contraseña:</strong> {orden.tipo_contrasena || 'No especificado'}</p>
                 <p><strong>Contraseña:</strong> {orden.password || 'No registrada'}</p>
-                <p><strong>Observaciones:</strong> {orden.observaciones}</p>
                 <p><strong>Estado:</strong> {orden.estado}</p>
                 <p><strong>Importe:</strong> ${orden.importe}</p>
               </div>
@@ -477,7 +561,7 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos, cargarProductos}) {
+function Stock({ productos, cargarProductos }) {
   const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
   const [editingId, setEditingId] = useState(null);
   
@@ -493,17 +577,17 @@ function Stock({ productos, cargarProductos}) {
   ];
 
   const handleAgregar = async () => {
-  if (form.nombre && form.categoria && form.cantidad > 0) {
-    if (editingId) {
-      await supabase.from("productos").update(form).eq("id", editingId);
-    } else {
-      await supabase.from("productos").insert([form]);
+    if (form.nombre && form.categoria && form.cantidad > 0) {
+      if (editingId) {
+        await supabase.from("productos").update(form).eq("id", editingId);
+      } else {
+        await supabase.from("productos").insert([form]);
+      }
+      cargarProductos();
+      setEditingId(null);
+      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
     }
-    cargarProductos(); // ← AGREGÁ ESTO
-    setEditingId(null);
-    setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
-  }
-};
+  };
 
   const handleEditar = (p) => {
     setEditingId(p.id);
@@ -516,17 +600,26 @@ function Stock({ productos, cargarProductos}) {
   };
 
   const handleEliminar = async (id) => {
-  await supabase.from("productos").delete().eq("id", id);
-  cargarProductos(); // ← AGREGÁ ESTO
-};
+    await supabase.from("productos").delete().eq("id", id);
+    cargarProductos();
+  };
 
   const handleDescontar = async (id, cantidad) => {
     const producto = productos.find((p) => p.id === id);
     if (producto) {
       const nuevaCantidad = Math.max(0, producto.cantidad - cantidad);
       await supabase.from("productos").update({ cantidad: nuevaCantidad }).eq("id", id);
+      cargarProductos();
     }
   };
+
+  const productosPorCategoria = {};
+  productos.forEach((p) => {
+    if (!productosPorCategoria[p.categoria]) {
+      productosPorCategoria[p.categoria] = [];
+    }
+    productosPorCategoria[p.categoria].push(p);
+  });
 
   return (
     <div>
@@ -552,24 +645,32 @@ function Stock({ productos, cargarProductos}) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "12px" }}>
-        {productos.map((p) => (
-          <div key={p.id} style={{ background: "#141715", padding: "12px", borderRadius: "8px", border: p.cantidad <= 1 ? "2px solid #e53e3e" : "1px solid #2a2e2b" }}>
-            <h4 style={{ margin: "0 0 8px 0" }}>{p.nombre}</h4>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#9aa39c" }}>{p.categoria}</p>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: p.cantidad <= 1 ? "#e53e3e" : "#6ee7a0" }}>
-              📦 Stock: {p.cantidad} {p.cantidad <= 1 && "⚠️ BAJO"}
-            </p>
-            <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#ff7a1a" }}>💰 ${p.precio_venta}</p>
-            
-            <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
-              <button onClick={() => handleDescontar(p.id, 1)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-1</button>
-              <button onClick={() => handleDescontar(p.id, 5)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-5</button>
-            </div>
+      <div>
+        {Object.keys(productosPorCategoria).map((categoria) => (
+          <div key={categoria} style={{ marginBottom: "24px" }}>
+            <h3 style={{ background: "#ff7a1a", color: "#000", padding: "12px", borderRadius: "6px", cursor: "pointer" }}>
+              📦 {categoria}
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "12px", marginTop: "12px" }}>
+              {productosPorCategoria[categoria].map((p) => (
+                <div key={p.id} style={{ background: "#141715", padding: "12px", borderRadius: "8px", border: p.cantidad <= 1 ? "2px solid #e53e3e" : "1px solid #2a2e2b" }}>
+                  <h4 style={{ margin: "0 0 8px 0" }}>{p.nombre}</h4>
+                  <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: p.cantidad <= 1 ? "#e53e3e" : "#6ee7a0" }}>
+                    📦 Stock: {p.cantidad} {p.cantidad <= 1 && "⚠️ BAJO"}
+                  </p>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#ff7a1a" }}>💰 ${p.precio_venta}</p>
+                  
+                  <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+                    <button onClick={() => handleDescontar(p.id, 1)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-1</button>
+                    <button onClick={() => handleDescontar(p.id, 5)} style={{ flex: 1, background: "#3b82f6", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>-5</button>
+                  </div>
 
-            <div style={{ display: "flex", gap: "6px" }}>
-              <button onClick={() => handleEditar(p)} style={{ flex: 1, background: "#ff7a1a", color: "#000", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Editar</button>
-              <button onClick={() => handleEliminar(p.id)} style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => handleEditar(p)} style={{ flex: 1, background: "#ff7a1a", color: "#000", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Editar</button>
+                    <button onClick={() => handleEliminar(p.id)} style={{ flex: 1, background: "#e53e3e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Eliminar</button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
