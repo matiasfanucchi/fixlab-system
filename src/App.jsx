@@ -477,7 +477,7 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos }) {
+function Stock({ productos, cargarProductos}) {
   const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
   const [editingId, setEditingId] = useState(null);
   
