@@ -95,7 +95,14 @@ export default function App() {
     await supabase.from("ordenes").delete().eq("id", id);
     cargarOrdenes();
   };
-
+const guardarProducto = async (producto) => {
+  const { error } = await supabase.from("productos").insert([producto]);
+  if (!error) {
+    cargarProductos();
+  } else {
+    alert("Error: " + error.message);
+  }
+};  
   const guardarMovimientoCaja = async (movimiento) => {
     const { error } = await supabase.from("caja").insert([{ ...movimiento, fecha: new Date().toISOString() }]);
     if (!error) cargarCaja();
@@ -470,7 +477,7 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos, setProductos }) {
+function Stock({ productos, guardarProducto, actualizarProducto }) {
   const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
   
   const categorias = [
@@ -484,23 +491,17 @@ function Stock({ productos, setProductos }) {
     "Pendrives", "Memorias", "Accesorios Varios"
   ];
 
-  const handleAgregar = async () => {
+  const handleAgregar = () => {
     if (form.nombre && form.categoria && form.cantidad > 0) {
-      const { data, error } = await supabase.from("productos").insert([form]);
-      if (!error) {
-        const { data: productos } = await supabase.from("productos").select("*");
-        setProductos(productos || []);
-        setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
-      } else {
-        alert("Error: " + error.message);
-      }
+      guardarProducto(form);
+      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
     }
   };
 
   const handleEliminar = async (id) => {
     await supabase.from("productos").delete().eq("id", id);
-    const { data: productos } = await supabase.from("productos").select("*");
-    setProductos(productos || []);
+    const { data: prods } = await supabase.from("productos").select("*");
+    // Actualizar state aquí
   };
 
   const handleDescontar = async (id, cantidad) => {
@@ -508,8 +509,6 @@ function Stock({ productos, setProductos }) {
     if (producto) {
       const nuevaCantidad = Math.max(0, producto.cantidad - cantidad);
       await supabase.from("productos").update({ cantidad: nuevaCantidad }).eq("id", id);
-      const { data: productos } = await supabase.from("productos").select("*");
-      setProductos(productos || []);
     }
   };
 
