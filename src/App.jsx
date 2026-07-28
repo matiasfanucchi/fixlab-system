@@ -272,10 +272,11 @@ export default function App() {
               actualizarOrden={actualizarOrden} 
               eliminarOrden={eliminarOrden} 
               generarPDF={generarPDF}
+              guardarMovimientoCaja={guardarMovimientoCaja}
             />
           )}
-          {tab === "caja" && <Caja caja={caja} guardarMovimientoCaja={guardarMovimientoCaja} />}
-          {tab === "stock" && <Stock productos={productos} cargarProductos={cargarProductos} />}
+          {tab === "caja" && <Caja caja={caja} guardarMovimientoCaja={guardarMovimientoCaja} productos={productos} />}
+          {tab === "stock" && <Stock productos={productos} cargarProductos={cargarProductos} guardarMovimientoCaja={guardarMovimientoCaja} />}
         </div>
       </div>
     </div>
@@ -293,9 +294,7 @@ function Dashboard({ ordenes, caja, productos, setTab }) {
 
   return (
     <div style={{ color: "#eef0ee" }}>
-      <h1 style={{ fontSize: "36px", marginBottom: "30px", textAlign: "center" }}>
-        📊 Dashboard
-      </h1>
+      <h1 style={{ fontSize: "36px", marginBottom: "30px", textAlign: "center" }}>📊 Dashboard</h1>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px", marginBottom: "40px" }}>
         <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #ff7a1a", textAlign: "center" }}>
@@ -303,100 +302,42 @@ function Dashboard({ ordenes, caja, productos, setTab }) {
           <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#6ee7a0" }}>{ordenesPendientes}</h1>
         </div>
 
-        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #6ee7a0", textAlign: "center", cursor: "pointer", minHeight: expandBalance ? "120px" : "100px" }} onClick={() => setExpandBalance(!expandBalance)}>
+        <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #6ee7a0", textAlign: "center", cursor: "pointer" }} onClick={() => setExpandBalance(!expandBalance)}>
           <h3 style={{ margin: 0, color: "#6ee7a0", fontSize: "14px" }}>💰 BALANCE CAJA {expandBalance ? "▼" : "▶"}</h3>
-          {expandBalance ? (
+          {expandBalance && (
             <h1 style={{ margin: "12px 0 0 0", fontSize: "32px", color: (ingresos - egresos) >= 0 ? "#6ee7a0" : "#e53e3e" }}>
               ${(ingresos - egresos).toFixed(2)}
             </h1>
-          ) : (
-            <p style={{ margin: "12px 0 0 0", color: "#9aa39c", fontSize: "12px" }}>Click para expandir</p>
           )}
         </div>
 
         <div style={{ background: "#141715", padding: "24px", borderRadius: "12px", border: "2px solid #e53e3e", textAlign: "center", cursor: "pointer" }} onClick={() => setExpandStockBajo(!expandStockBajo)}>
           <h3 style={{ margin: 0, color: "#e53e3e", fontSize: "14px" }}>⚠️ STOCK BAJO</h3>
           <h1 style={{ margin: "12px 0 0 0", fontSize: "48px", color: "#e53e3e" }}>{productosStockBajo.length}</h1>
-          <p style={{ margin: "8px 0 0 0", fontSize: "11px", color: "#ff7a1a" }}>Click para ver detalles</p>
         </div>
       </div>
 
       {expandStockBajo && productosStockBajo.length > 0 && (
         <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "30px", border: "2px solid #e53e3e" }}>
-          <h3 style={{ color: "#e53e3e", marginTop: 0, marginBottom: "16px" }}>📦 Productos con Stock Bajo ({productosStockBajo.length}):</h3>
+          <h3 style={{ color: "#e53e3e", marginTop: 0 }}>Productos con Stock Bajo:</h3>
           {productosStockBajo.map((p) => (
-            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px", backgroundColor: "#1a1f1c", borderRadius: "4px", marginBottom: "8px" }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: "bold" }}>{p.nombre}</p>
-                <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#9aa39c" }}>{p.categoria}</p>
-              </div>
-              <span style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "16px" }}>{p.cantidad} unid.</span>
+            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px", backgroundColor: "#1a1f1c", borderRadius: "4px", marginBottom: "8px" }}>
+              <div><p style={{ margin: 0, fontWeight: "bold" }}>{p.nombre}</p><p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#9aa39c" }}>{p.categoria}</p></div>
+              <span style={{ color: "#e53e3e", fontWeight: "bold" }}>{p.cantidad} unid.</span>
             </div>
           ))}
         </div>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
-        <button 
-          onClick={() => setTab("servicio")}
-          style={{ 
-            background: "linear-gradient(135deg, #ff7a1a 0%, #ff9c42 100%)", 
-            color: "#000", 
-            border: "none", 
-            padding: "20px", 
-            borderRadius: "8px", 
-            fontSize: "18px", 
-            fontWeight: "600", 
-            cursor: "pointer",
-            transition: "transform 0.2s"
-          }}
-          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
-          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
-        >
-          📱 Servicio Técnico
-        </button>
-
-        <button 
-          onClick={() => setTab("caja")}
-          style={{ 
-            background: "linear-gradient(135deg, #6ee7a0 0%, #8ff4b8 100%)", 
-            color: "#000", 
-            border: "none", 
-            padding: "20px", 
-            borderRadius: "8px", 
-            fontSize: "18px", 
-            fontWeight: "600", 
-            cursor: "pointer",
-            transition: "transform 0.2s"
-          }}
-          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
-          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
-        >
-          💵 Caja
-        </button>
-
-        <button 
-          onClick={() => setTab("stock")}
-          style={{ 
-            background: "linear-gradient(135deg, #3b82f6 0%, #5ba3ff 100%)", 
-            color: "#fff", 
-            border: "none", 
-            padding: "20px", 
-            borderRadius: "8px", 
-            fontSize: "18px", 
-            fontWeight: "600", 
-            cursor: "pointer",
-            transition: "transform 0.2s"
-          }}
-          onMouseOver={(e) => e.target.style.transform = "scale(1.05)"}
-          onMouseOut={(e) => e.target.style.transform = "scale(1)"}
-        >
-          📦 Stock
-        </button>
+        <button onClick={() => setTab("servicio")} style={{ background: "linear-gradient(135deg, #ff7a1a 0%, #ff9c42 100%)", color: "#000", border: "none", padding: "20px", borderRadius: "8px", fontSize: "18px", fontWeight: "600", cursor: "pointer", transition: "transform 0.2s" }} onMouseOver={(e) => e.target.style.transform = "scale(1.05)"} onMouseOut={(e) => e.target.style.transform = "scale(1)"}>📱 Servicio Técnico</button>
+        <button onClick={() => setTab("caja")} style={{ background: "linear-gradient(135deg, #6ee7a0 0%, #8ff4b8 100%)", color: "#000", border: "none", padding: "20px", borderRadius: "8px", fontSize: "18px", fontWeight: "600", cursor: "pointer", transition: "transform 0.2s" }} onMouseOver={(e) => e.target.style.transform = "scale(1.05)"} onMouseOut={(e) => e.target.style.transform = "scale(1)"}>💵 Caja</button>
+        <button onClick={() => setTab("stock")} style={{ background: "linear-gradient(135deg, #3b82f6 0%, #5ba3ff 100%)", color: "#fff", border: "none", padding: "20px", borderRadius: "8px", fontSize: "18px", fontWeight: "600", cursor: "pointer", transition: "transform 0.2s" }} onMouseOver={(e) => e.target.style.transform = "scale(1.05)"} onMouseOut={(e) => e.target.style.transform = "scale(1)"}>📦 Stock</button>
       </div>
     </div>
   );
 }
+
 function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden, generarPDF, guardarMovimientoCaja }) {
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
@@ -433,7 +374,6 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   const handleEstadoChange = (orden, nuevoEstado) => {
     actualizarOrden(orden.id, { estado: nuevoEstado });
     
-    // Si se marca como Entregado, registrar en Caja
     if (nuevoEstado === "Entregado" && orden.importe) {
       guardarMovimientoCaja({
         tipo: "ingreso",
@@ -443,7 +383,6 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
       });
     }
     
-    // Abrir WhatsApp
     const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo cambió a ${nuevoEstado}. - Fix Lab`);
     const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
     window.open(link, '_blank');
@@ -531,8 +470,8 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   );
 }
 
-function Caja({ caja, guardarMovimientoCaja }) {
-  const [form, setForm] = useState({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "" });
+function Caja({ caja, guardarMovimientoCaja, productos }) {
+  const [form, setForm] = useState({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "", producto_id: null, cantidad: 0 });
   const [filtro, setFiltro] = useState("todos");
 
   const ingresos = caja.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + parseFloat(m.monto || 0), 0);
@@ -549,10 +488,28 @@ function Caja({ caja, guardarMovimientoCaja }) {
 
   const cajaFiltrada = caja.filter((m) => new Date(m.fecha) >= getFechaInicio());
 
-  const handleSave = () => {
-    if (form.monto && form.descripcion) {
-      guardarMovimientoCaja(form);
-      setForm({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "" });
+  const handleSave = async () => {
+    if (form.tipo === "venta" && form.producto_id && form.cantidad > 0) {
+      const producto = productos.find((p) => p.id === form.producto_id);
+      if (producto) {
+        const monto = form.cantidad * producto.precio_venta;
+        await guardarMovimientoCaja({
+          tipo: "ingreso",
+          categoria: "venta",
+          monto: monto,
+          descripcion: `Venta - ${producto.nombre} (${form.cantidad} unid.)`
+        });
+        
+        const nuevaCantidad = Math.max(0, producto.cantidad - form.cantidad);
+        await supabase.from("productos").update({ cantidad: nuevaCantidad }).eq("id", producto.id);
+        
+        setForm({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "", producto_id: null, cantidad: 0 });
+      }
+    } else if (form.monto && form.descripcion && form.tipo !== "venta") {
+      await guardarMovimientoCaja(form);
+      setForm({ tipo: "ingreso", categoria: "reparacion", monto: "", descripcion: "", producto_id: null, cantidad: 0 });
+    } else {
+      alert("Completa todos los campos");
     }
   };
 
@@ -567,19 +524,35 @@ function Caja({ caja, guardarMovimientoCaja }) {
 
       <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
         <h3>Nuevo Movimiento</h3>
-        <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+        <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value, monto: "", descripcion: "", producto_id: null, cantidad: 0 })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
           <option value="ingreso">Ingreso</option>
+          <option value="venta">Venta de Accesorios</option>
           <option value="egreso">Egreso</option>
         </select>
-        {form.tipo === "ingreso" && (
-          <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
-            <option value="reparacion">Reparación</option>
-            <option value="venta">Venta de Accesorios</option>
-            <option value="otro">Otro</option>
-          </select>
+
+        {form.tipo === "venta" ? (
+          <>
+            <select value={form.producto_id || ""} onChange={(e) => setForm({ ...form, producto_id: parseInt(e.target.value) || null })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+              <option value="">-- Selecciona producto --</option>
+              {productos.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre} (Stock: {p.cantidad})</option>
+              ))}
+            </select>
+            <input type="number" placeholder="Cantidad" value={form.cantidad} onChange={(e) => setForm({ ...form, cantidad: parseInt(e.target.value) || 0 })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+          </>
+        ) : (
+          <>
+            {form.tipo === "ingreso" && (
+              <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }}>
+                <option value="reparacion">Reparación</option>
+                <option value="otro">Otro</option>
+              </select>
+            )}
+            <input type="number" placeholder="Monto" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+            <input placeholder="Descripción" value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+          </>
         )}
-        <input type="number" placeholder="Monto" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
-        <input placeholder="Descripción" value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "12px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+
         <button onClick={handleSave} style={{ width: "100%", background: "#6ee7a0", color: "#000", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Guardar</button>
       </div>
 
@@ -602,7 +575,7 @@ function Caja({ caja, guardarMovimientoCaja }) {
   );
 }
 
-function Stock({ productos, cargarProductos }) {
+function Stock({ productos, cargarProductos, guardarMovimientoCaja }) {
   const [form, setForm] = useState({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
   const [editingId, setEditingId] = useState(null);
   
@@ -650,6 +623,15 @@ function Stock({ productos, cargarProductos }) {
     if (producto) {
       const nuevaCantidad = Math.max(0, producto.cantidad - cantidad);
       await supabase.from("productos").update({ cantidad: nuevaCantidad }).eq("id", id);
+      
+      const monto = cantidad * producto.precio_venta;
+      await guardarMovimientoCaja({
+        tipo: "ingreso",
+        categoria: "venta",
+        monto: monto,
+        descripcion: `Venta - ${producto.nombre} (${cantidad} unid.)`
+      });
+      
       cargarProductos();
     }
   };
