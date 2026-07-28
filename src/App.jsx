@@ -591,17 +591,18 @@ function Stock({ productos, cargarProductos, guardarMovimientoCaja }) {
   ];
 
   const handleAgregar = async () => {
-    if (form.nombre && form.categoria && form.cantidad > 0) {
-      if (editingId) {
-        await supabase.from("productos").update(form).eq("id", editingId);
-      } else {
-        await supabase.from("productos").insert([form]);
-      }
-      cargarProductos();
-      setEditingId(null);
-      setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  if (form.nombre && form.categoria && form.cantidad > 0) {
+    if (editingId) {
+      const { id, ...updateData } = form;
+      await supabase.from("productos").update(updateData).eq("id", editingId);
+    } else {
+      await supabase.from("productos").insert([form]);
     }
-  };
+    cargarProductos();
+    setEditingId(null);
+    setForm({ nombre: "", categoria: "", cantidad: 0, precio_venta: 0 });
+  }
+};
 
   const handleEditar = (p) => {
     setEditingId(p.id);
