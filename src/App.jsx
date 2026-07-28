@@ -397,7 +397,7 @@ function Dashboard({ ordenes, caja, productos, setTab }) {
     </div>
   );
 }
-function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden, generarPDF }) {
+function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden, generarPDF, guardarMovimientoCaja }) {
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
@@ -429,6 +429,25 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
     (o.equipo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     o.id.toString().includes(busqueda)
   );
+
+  const handleEstadoChange = (orden, nuevoEstado) => {
+    actualizarOrden(orden.id, { estado: nuevoEstado });
+    
+    // Si se marca como Entregado, registrar en Caja
+    if (nuevoEstado === "Entregado" && orden.importe) {
+      guardarMovimientoCaja({
+        tipo: "ingreso",
+        categoria: "reparacion",
+        monto: orden.importe,
+        descripcion: `Reparación - ${orden.cliente}`
+      });
+    }
+    
+    // Abrir WhatsApp
+    const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo cambió a ${nuevoEstado}. - Fix Lab`);
+    const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`;
+    window.open(link, '_blank');
+  };
 
   return (
     <div>
@@ -493,7 +512,7 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
             )}
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <select value={orden.estado || "Ingresado"} onChange={(e) => { const nuevoEstado = e.target.value; actualizarOrden(orden.id, { estado: nuevoEstado }); const mensaje = encodeURIComponent(`Hola ${orden.cliente}! Tu equipo cambió a ${nuevoEstado}. - Fix Lab`); const link = `https://wa.me/${orden.telefono.replace(/\D/g, '')}?text=${mensaje}`; window.open(link, '_blank'); }} style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
+              <select value={orden.estado || "Ingresado"} onChange={(e) => handleEstadoChange(orden, e.target.value)} style={{ padding: "6px 12px", borderRadius: "4px", background: "#1a1f1c", border: "1px solid #2a2e2b", color: "#eef0ee", cursor: "pointer", fontSize: "12px" }}>
                 <option>Ingresado</option>
                 <option>Diagnóstico</option>
                 <option>En reparación</option>
