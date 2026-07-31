@@ -103,7 +103,7 @@ export default function App() {
   const generarCopia = (startY, esPrimeralCopia) => {
     doc.setFillColor(20, 23, 21);
     doc.rect(0, startY, pageWidth, 25, 'F');
-    doc.addImage(logo, 'PNG', 10, startY + 8, 12, 12);
+    doc.addImage(logo, 'PNG', 10, startY + 8, 18, 18);
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
     doc.text("FIX", 25, startY + 15);
