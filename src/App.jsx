@@ -103,15 +103,15 @@ export default function App() {
   const generarCopia = (startY, esPrimeralCopia) => {
     doc.setFillColor(20, 23, 21);
     doc.rect(0, startY, pageWidth, 25, 'F');
-    doc.addImage(logo, 'PNG', 10, startY + 8, 18, 18);
-doc.setFontSize(20);
+    doc.addImage(logo, 'PNG', 12, startY + 3, 22, 22);
+doc.setFontSize(22);
 doc.setTextColor(255, 255, 255);
-doc.text("FIX", 32, startY + 15);
+doc.text("FIX", 38, startY + 14);
 doc.setTextColor(255, 122, 26);
-doc.text("LAB", 42, startY + 15);
+doc.text("LAB", 49, startY + 14);
 doc.setTextColor(255, 122, 26);
 doc.setFontSize(10);
-doc.text("Reparación de celulares y PC", 32, startY + 20);
+doc.text("Reparación de celulares y PC", 38, startY + 21);
     doc.setDrawColor(255, 122, 26);
     doc.setLineWidth(0.5);
     doc.line(10, startY + 28, pageWidth - 10, startY + 28);
