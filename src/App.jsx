@@ -106,12 +106,12 @@ export default function App() {
     doc.addImage(logo, 'PNG', 10, startY + 5, 50, 16);
 doc.setFontSize(22);
 doc.setTextColor(255, 255, 255);
-doc.text("FIX", 65, startY + 14);
+doc.text("FIX", pageWidth - 10, startY + 14, { align: 'right' });
 doc.setTextColor(255, 122, 26);
-doc.text("LAB", 76, startY + 14);
+doc.text("LAB", pageWidth - 10, startY + 14, { align: 'right' });
 doc.setTextColor(255, 122, 26);
 doc.setFontSize(10);
-doc.text("Reparación de celulares y PC", 65, startY + 21);
+doc.text("Reparación de celulares y PC", pageWidth - 10, startY + 21, { align: 'right' });
     doc.setDrawColor(255, 122, 26);
     doc.setLineWidth(0.5);
     doc.line(10, startY + 28, pageWidth - 10, startY + 28);
