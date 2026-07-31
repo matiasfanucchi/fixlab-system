@@ -100,7 +100,7 @@ export default function App() {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  const generarCopia = (startY) => {
+  const generarCopia = (startY, esPrimeralCopia) => {
     doc.setFillColor(20, 23, 21);
     doc.rect(0, startY, pageWidth, 25, 'F');
     doc.addImage(logo, 'PNG', 10, startY + 8, 12, 12);
@@ -200,19 +200,22 @@ export default function App() {
     const terms = "1) Para retirar el equipo es OBLIGATORIA la presentación de este comprobante. SIN ESTE COMPROBANTE NO SE ENTREGA EL EQUIPO. 2) Los equipos no retirados dentro de los 60 días podrán ser descartados. 3) El cliente autoriza diagnóstico y reparación. FIX LAB no se responsabiliza por fallas ocultas o equipos previamente manipulados.";
     const splitTerms = doc.splitTextToSize(terms, pageWidth - 20);
     doc.text(splitTerms, 10, yPos);
+
     yPos = startY + 105;
     doc.setLineWidth(0.5);
     doc.setDrawColor(0, 0, 0);
-    doc.line(15, yPos, 50, yPos);
     doc.line(pageWidth - 55, yPos, pageWidth - 20, yPos);
-    if (startY === 0) {
-      doc.addImage(firma, 'PNG', pageWidth - 55, yPos + 40, 30, 20);
-    }
     yPos += 5;
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text("Firma Cliente", 20, yPos);
-    doc.text("Firma Técnico", pageWidth - 50, yPos);
+    
+    if (esPrimeralCopia) {
+      doc.addImage(firma, 'PNG', pageWidth - 55, yPos + 15, 30, 20);
+      doc.text("Firma Técnico", pageWidth - 50, yPos);
+    } else {
+      doc.text("Firma Cliente", pageWidth - 50, yPos);
+    }
+
     yPos = startY + 125;
     doc.setFillColor(20, 23, 21);
     doc.rect(0, yPos, pageWidth, 15, 'F');
@@ -222,13 +225,13 @@ export default function App() {
     doc.text("MAESTRO VIDAL 1379 LOCAL 2 - WSP 3516789960", pageWidth / 2, yPos + 8, { align: 'center' });
   };
 
-  generarCopia(0);
+  generarCopia(0, true);
   doc.setLineWidth(0.3);
   doc.setDrawColor(200, 200, 200);
   doc.setLineDash([5, 5]);
   doc.line(10, 140, pageWidth - 10, 140);
   doc.setLineDash([]);
-  generarCopia(145);
+  generarCopia(145, false);
   doc.save(`orden-${orden.id}-${orden.cliente}.pdf`);
 };
 
