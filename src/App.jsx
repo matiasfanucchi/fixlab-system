@@ -344,16 +344,18 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   const [busqueda, setBusqueda] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
-  const handleSave = () => {
-    if (editingId) {
-      actualizarOrden(editingId, form);
-      setEditingId(null);
-      setForm({});
-    } else {
-      guardarOrden(form);
-      setForm({});
-    }
-  };
+ const handleSave = () => {
+  if (editingId) {
+    // Sacar solo id y fecha, todo lo demás se guarda
+    const { id, fecha, ...updateData } = form;
+    actualizarOrden(editingId, updateData);
+    setEditingId(null);
+    setForm({});
+  } else {
+    guardarOrden(form);
+    setForm({});
+  }
+};
 
   const handleEdit = (orden) => {
     setEditingId(orden.id);
