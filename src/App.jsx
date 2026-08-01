@@ -110,7 +110,6 @@ doc.text("FIXLAB", 60, startY + 12);
 doc.setTextColor(255, 122, 26);
 doc.setFontSize(9);
 doc.text("Reparación de celulares y PC", 60, startY + 22);
-doc.text("Reparación de celulares y PC", pageWidth - 10, startY + 21, { align: 'right' });
     doc.setDrawColor(255, 122, 26);
     doc.setLineWidth(0.5);
     doc.line(10, startY + 28, pageWidth - 10, startY + 28);
