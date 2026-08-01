@@ -104,9 +104,9 @@ export default function App() {
     doc.setFillColor(20, 23, 21);
     doc.rect(0, startY, pageWidth, 25, 'F');
   const halfWidth = pageWidth / 2;
-    const logoX = (halfWidth - 45) / 2;
+    const logoX = 15;
     doc.addImage(logo, 'PNG', logoX, startY + 5, 45, 16);
-const rightCenterX = halfWidth + (halfWidth / 2);
+const rightCenterX = pageWidth - 42;
 doc.setFontSize(18);
 doc.setTextColor(255, 255, 255);
 doc.text("FIXLAB", rightCenterX, startY + 12, { align: 'center' });
