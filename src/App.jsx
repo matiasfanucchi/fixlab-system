@@ -442,8 +442,10 @@ function VentasCuotas({ ventas, pagosCuotas, guardarVenta, registrarPago, toggle
         <input placeholder="Equipo (ej: iPhone 12, Samsung A54) *" value={form.equipo} onChange={e => setForm({ ...form, equipo: e.target.value })} style={inputStyle} />
         <input placeholder="IMEI / Serie" value={form.imei} onChange={e => setForm({ ...form, imei: e.target.value })} style={inputStyle} />
         <input type="number" placeholder="Precio total *" value={form.precio_total} onChange={e => setForm({ ...form, precio_total: e.target.value })} style={inputStyle} />
-        <input type="number" placeholder="Entrada (0 si no hay)" value={form.entrada} onChange={e => setForm({ ...form, entrada: e.target.value })} style={inputStyle} />
-        <input type="number" placeholder="Cantidad de cuotas *" value={form.cuotas_total} onChange={e => setForm({ ...form, cuotas_total: e.target.value })} style={inputStyle} />
+        <label style={{ color: "#9aa39c", fontSize: "12px", display: "block", marginBottom: "4px" }}>Entrada (0 si no hay)</label>
+<input type="number" value={form.entrada} onChange={e => setForm({ ...form, entrada: e.target.value })} style={inputStyle} />
+<label style={{ color: "#9aa39c", fontSize: "12px", display: "block", marginBottom: "4px" }}>Cantidad de cuotas *</label>
+<input type="number" value={form.cuotas_total} onChange={e => setForm({ ...form, cuotas_total: e.target.value })} style={inputStyle} />
         <div style={{ background: "#1a1f1c", padding: "10px", borderRadius: "4px", marginBottom: "8px", color: "#6ee7a0", fontWeight: "600" }}>
           💰 Monto por cuota: ${montoCuota}
         </div>
