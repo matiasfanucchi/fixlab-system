@@ -540,15 +540,40 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
   const [busqueda, setBusqueda] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
-  const handleSave = () => {
-    if (editingId) {
-      const { id, fecha, ...updateData } = form;
-      actualizarOrden(editingId, updateData);
-      setEditingId(null); setForm({});
-    } else {
-      guardarOrden(form); setForm({});
-    }
-  };
+    // --- Detección de duplicados (traída de Britos) ---
+    const soloNumeros = (t) => (t || "").toString().replace(/\D/g, "");
+    const textoLimpio = (t) => (t || "").toString().trim().toLowerCase();
+    // Últimos 10 dígitos: así "351 678-9960" y "+54 9 351 6789960" cuentan como el mismo número
+    const telNormal = (t) => soloNumeros(t).slice(-10);
+    const telForm = telNormal(form.telefono);
+    const ordenesMismoTel = telForm.length >= 6 ? ordenes.filter((o) => telNormal(o.telefono) === telForm && o.id !== editingId) : [];
+    const clienteConocido = ordenesMismoTel.length > 0 ? ordenesMismoTel[0] : null;
+
+    const buscarDuplicado = () => {
+        const abiertas = ordenes.filter((o) => o.estado !== "Entregado" && o.id !== editingId);
+        const imeiForm = textoLimpio(form.imei);
+        if (imeiForm) {
+            const dupImei = abiertas.find((o) => textoLimpio(o.imei) === imeiForm);
+            if (dupImei) return `Ya hay una orden abierta con este IMEI/Serie:\n\nOrden #${dupImei.id} - ${dupImei.cliente} - ${dupImei.equipo} (${dupImei.estado})`;
+        }
+        if (telForm && textoLimpio(form.equipo)) {
+            const dupEquipo = abiertas.find((o) => telNormal(o.telefono) === telForm && textoLimpio(o.equipo) === textoLimpio(form.equipo));
+            if (dupEquipo) return `Este cliente ya tiene una orden abierta con el mismo equipo:\n\nOrden #${dupEquipo.id} - ${dupEquipo.cliente} - ${dupEquipo.equipo} (${dupEquipo.estado})`;
+        }
+        return null;
+    };
+
+    const handleSave = () => {
+        const aviso = buscarDuplicado();
+        if (aviso && !window.confirm(`⚠️ Posible orden duplicada\n\n${aviso}\n\n¿Querés guardarla igual?`)) return;
+        if (editingId) {
+            const { id, fecha, ...updateData } = form;
+            actualizarOrden(editingId, updateData);
+            setEditingId(null); setForm({});
+        } else {
+            guardarOrden(form); setForm({});
+        }
+    };
   const handleEdit = (orden) => { setEditingId(orden.id); setForm(orden); };
   const handleCancel = () => { setEditingId(null); setForm({}); };
   const ordenesFiltradas = ordenes.filter((o) => (o.cliente || '').toLowerCase().includes(busqueda.toLowerCase()) || (o.equipo || '').toLowerCase().includes(busqueda.toLowerCase()) || o.id.toString().includes(busqueda));
@@ -566,7 +591,15 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
       <h2>Servicio Técnico</h2>
       <div style={{ background: "#141715", padding: "16px", borderRadius: "8px", marginBottom: "20px" }}>
         <input placeholder="Cliente" value={form.cliente || ""} onChange={(e) => setForm({ ...form, cliente: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
-        <input placeholder="Teléfono" value={form.telefono || ""} onChange={(e) => setForm({ ...form, telefono: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+              <input placeholder="Teléfono" value={form.telefono || ""} onChange={(e) => setForm({ ...form, telefono: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
+              {clienteConocido && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", background: "#1a1f1c", border: "1px solid #ff7a1a", borderRadius: "4px", padding: "8px", marginBottom: "8px", fontSize: "13px" }}>
+                      <span>👤 Cliente conocido: <strong>{clienteConocido.cliente}</strong> — {ordenesMismoTel.length} orden(es) anterior(es)</span>
+                      {textoLimpio(form.cliente) !== textoLimpio(clienteConocido.cliente) && (
+                          <button onClick={() => setForm({ ...form, cliente: clienteConocido.cliente })} style={{ background: "#ff7a1a", color: "#000", border: "none", padding: "4px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap" }}>Usar nombre</button>
+                      )}
+                  </div>
+              )}
         <input placeholder="Equipo" value={form.equipo || ""} onChange={(e) => setForm({ ...form, equipo: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="Falla" value={form.falla || ""} onChange={(e) => setForm({ ...form, falla: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
         <input placeholder="IMEI/Serie" value={form.imei || ""} onChange={(e) => setForm({ ...form, imei: e.target.value })} style={{ width: "100%", padding: "8px", marginBottom: "8px", background: "#1a1f1c", border: "1px solid #2a2e2b", borderRadius: "4px", color: "#eef0ee" }} />
