@@ -81,7 +81,7 @@ export default function App() {
       alert("Completa: Cliente, Teléfono y Equipo");
       return;
     }
-    const { data, error } = await supabase.from("ordenes").insert([{ ...orden, fecha: new Date().toISOString() }]);
+      const { data, error } = await supabase.from("ordenes").insert([{ estado: "Ingresado", ...orden, fecha: new Date().toISOString() }]);
     if (error) {
       console.log("Error al guardar:", error);
       alert("Error: " + error.message);
@@ -554,11 +554,11 @@ function ServicioTecnico({ ordenes, guardarOrden, actualizarOrden, eliminarOrden
         const imeiForm = textoLimpio(form.imei);
         if (imeiForm) {
             const dupImei = abiertas.find((o) => textoLimpio(o.imei) === imeiForm);
-            if (dupImei) return `Ya hay una orden abierta con este IMEI/Serie:\n\nOrden #${dupImei.id} - ${dupImei.cliente} - ${dupImei.equipo} (${dupImei.estado})`;
+            if (dupImei) return `Ya hay una orden abierta con este IMEI/Serie:\n\nOrden #${dupImei.id} - ${dupImei.cliente} - ${dupImei.equipo} (${dupImei.estado || "Ingresado"})`;
         }
         if (telForm && textoLimpio(form.equipo)) {
             const dupEquipo = abiertas.find((o) => telNormal(o.telefono) === telForm && textoLimpio(o.equipo) === textoLimpio(form.equipo));
-            if (dupEquipo) return `Este cliente ya tiene una orden abierta con el mismo equipo:\n\nOrden #${dupEquipo.id} - ${dupEquipo.cliente} - ${dupEquipo.equipo} (${dupEquipo.estado})`;
+            if (dupEquipo) return `Este cliente ya tiene una orden abierta con el mismo equipo:\n\nOrden #${dupEquipo.id} - ${dupEquipo.cliente} - ${dupEquipo.equipo} (${dupEquipo.estado || "Ingresado"})`;
         }
         return null;
     };
